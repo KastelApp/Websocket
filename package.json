@@ -1,0 +1,26 @@
+{
+  "name": "ws",
+  "version": "1.0.0",
+  "description": "This is the WebSocket server for Kastel",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "lint": "eslint \"src/**/*.ts\"",
+    "prepare": "npm run build",
+    "preversion": "npm run lint",
+    "version": "npm run format && git add -A lib",
+    "postversion": "git push && git push --tags"
+  },
+  "author": "DarkerInk",
+  "license": "ISC",
+  "repository": "https://github.com/kastelll/ws.git",
+  "files": [
+    "dist/**/*"
+  ],
+  "dependencies": {
+    "@kastelll/packages": "^1.0.3",
+    "express": "^4.18.2"
+  }
+}

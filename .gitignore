@@ -1,0 +1,7 @@
+.npmrc
+dist/
+node_modules/
+
+tests/
+# Tests are completely different to __tests__ and should be ignored
+# This is just to test the dist folder before publishing
