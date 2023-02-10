@@ -1,11 +1,11 @@
 import { Events, User } from '@kastelll/packages/dist/Ws';
 import type { RawSettings } from '../Types/User/Settings';
 import type { RawUser } from '../Types/User/User';
-import { Encryption } from '../Utils/Encryption';
+import { Encryption } from '../Utils/Classes/Encryption';
 import schemaData from '../Utils/SchemaData';
 import { SettingSchema } from '../Utils/Schemas/Schemas';
-import Token from '../Utils/Token';
-import { WsUtils } from '../Utils/WsUtils';
+import Token from '../Utils/Classes/Token';
+import { WsUtils } from '../Utils/Classes/WsUtils';
 
 export class Identify extends Events {
   constructor() {
