@@ -1,7 +1,8 @@
+.yarn
 .npmrc
+
 dist/
 node_modules/
-tests/
-.yarn
 
-config.ts
+Config.ts
+Constants.ts

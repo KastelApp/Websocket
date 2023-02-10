@@ -9,51 +9,38 @@
  * GPL 3.0 Licensed
  */
 
-export interface WebsocketConfig {
-  Port: number;
-  AllowedIps: string[];
-  CloseOnError: boolean;
-  MaxConnections: number;
-  SystemLoginInfo: {
-    Password: string;
-    AllowNonLocalIp: boolean;
-    LocalIps: string[];
-  }
+import schemaExports from '../Utils/SchemaTypes/Exports';
+
+
+interface SchemaDataOptionsBase {
+  name: string;
+  extended: true | false;
 }
 
-export interface Encryption {
-  Algorithm: string;
-  InitVector: string;
-  SecurityKey: string;
-  JwtKey: string;
+interface SchemaDataOptionsWithExtends extends SchemaDataOptionsBase {
+  extended: true;
+  extends: keyof typeof schemaExports;
 }
 
-export interface Redis {
-  Host: string;
-  Port: number | string;
-  User: string;
-  Password: string;
-  Db: number | string;
+interface SchemaDataOptionsWithoutExtends extends SchemaDataOptionsBase {
+  extended: false;
+  expected:
+    | StringConstructor
+    | BooleanConstructor
+    | DateConstructor
+    | ArrayConstructor
+    | NumberConstructor;
+  default: any;
 }
 
-export interface MongoDB {
-  User: string;
-  Host: string;
-  Port: string | number;
-  Password: string;
-  Database: string;
-  AuthSource: string;
-  Uri: string;
-}
-export interface Regexes {
-  password: RegExp;
-  email: RegExp;
+type SchemaDataOptions =
+  | SchemaDataOptionsWithExtends
+  | SchemaDataOptionsWithoutExtends;
+
+export interface Schema {
+  type: ObjectConstructor | ArrayConstructor;
+  data: {
+    [key: string]: SchemaDataOptions;
+  };
 }
 
-export interface Config {
-  Encryption: Encryption;
-  Server: WebsocketConfig;
-  Redis: Redis;
-  MongoDB: MongoDB;
-  Regexes: Regexes;
-}

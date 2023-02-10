@@ -1,0 +1,47 @@
+{
+    "op": 1,
+    "data": {
+        "user": {
+            "username": "DarkerInk",
+            "id": "123456789012345678",
+            "discriminator": "1234",
+            "avatar": "a_123456789012345678"
+        },
+        "guilds": [{
+            "id": "123456789012345678",
+            "name": "DarkerInks Amazing Guild",
+            "icon": "a_123456789012345678",
+            "owner": true,
+            "permissions": 8,
+            "channels": [{
+                "name": "Amazing Channel",
+                "id": "123456789012345678",
+                "type": 0,
+                "accessOverwrites": [{
+                    "id": "123456789012345678",
+                    "type": "role",
+                    "allow": 0,
+                    "deny": 0
+                }]
+            }],
+            "roles": [{
+                "name": "@everyone",
+                "id": "123456789012345678",
+                "color": 0,
+                "hoist": false,
+                "position": 0,
+                "permissions": 104324161,
+                "mentionable": false
+            }],
+            "mentions": [{
+                "channelId": "123456789012345678",
+                "count": 1
+            }]
+        }],
+        "settings": {
+            "theme": "dark",
+            "locale": "en-US"
+        }
+    },
+    "seq": 1
+}

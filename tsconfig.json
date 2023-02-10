@@ -12,12 +12,10 @@
 		"strict": true,
 		"useUnknownInCatchVariables": true,
 		"noUncheckedIndexedAccess": true,
-
 		// Modules
 		"module": "CommonJS",
 		"moduleResolution": "node",
 		"resolveJsonModule": true,
-
 		// Emit
 		"declaration": true,
 		"declarationMap": false,
@@ -31,21 +29,25 @@
 		"removeComments": false,
 		"sourceMap": true,
 		"esModuleInterop": true,
-		"forceConsistentCasingInFileNames": true,
-
+		"forceConsistentCasingInFileNames": false,
 		// Language and Environment
 		"emitDecoratorMetadata": true,
 		"experimentalDecorators": true,
-		"lib": ["ESNext"],
+		"lib": [
+			"ES2022"
+		],
 		"target": "ES2022",
 		"useDefineForClassFields": true,
-        "allowJs": true,
+		"allowJs": true,
+		"typeRoots": [
+			"./src/Types/**/*"
+		],
+		"skipLibCheck": true
 	},
-    "exclude": [
-        ".github",
-        "node_modules",
-        "dist",
-		"tests",
-		"lib/__tests__"
-    ]
+	"include": [
+		"src/**/*"
+	],
+	"exclude": [
+		"node_modules"
+	]
 }
