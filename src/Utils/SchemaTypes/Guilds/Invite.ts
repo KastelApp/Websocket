@@ -9,10 +9,10 @@
  * GPL 3.0 Licensed
  */
 
-import type { Schema } from "../../Types/Schema";
+import type { Schema } from "../../../Types/Schema";
 
-const Invites: Schema = {
-    type: Array,
+const Invite: Schema = {
+    type: Object,
     data: {
         Id: {
             name: '_id',
@@ -52,6 +52,6 @@ const Invites: Schema = {
     },
 };
 
-export default Invites;
+export default Invite;
 
-export { Invites }
+export { Invite }

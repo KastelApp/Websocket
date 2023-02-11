@@ -9,12 +9,12 @@
  * GPL 3.0 Licensed
  */
 
-import type { Schema } from "../../Types/Schema";
+import type { Schema } from "../../../Types/Schema";
 
-const Bans: Schema = {
-    type: Array,
+const GuildMember: Schema = {
+    type: Object,
     data: {
-        id: {
+        Id: {
             name: '_id',
             expected: String,
             default: null,
@@ -22,35 +22,29 @@ const Bans: Schema = {
         },
         User: {
             name: 'User',
+            extended: true,
             extends: 'FriendUser',
-            extended: true
         },
-        Banner: {
-            name: 'Banner',
-            extends: 'FriendUser',
-            extended: true
+        Roles: {
+            name: 'Roles',
+            extended: true,
+            extends: 'Roles',
         },
-        Reason: {
-            name: 'Reason',
+        Nickname: {
+            name: 'Nickname',
             expected: String,
-            default: 'N/A',
-            extended: false
-        },
-        BanDate: {
-            name: 'BannedDate',
-            expected: Number,
-            default: Date.now(),
-            extended: false
-        },
-        UnbanDate: {
-            name: 'UnbanDate',
-            expected: Number,
             default: null,
             extended: false
         },
+        JoinedAt: {
+            name: 'JoinedAt',
+            expected: Number,
+            default: Date.now(),
+            extended: false
+        },  
     },
 };
 
-export default Bans;
+export default GuildMember;
 
-export { Bans }
+export { GuildMember }

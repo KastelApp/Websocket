@@ -9,42 +9,43 @@
  * GPL 3.0 Licensed
  */
 
-import type { Schema } from "../../Types/Schema";
+import type { Schema } from "../../../Types/Schema";
 
-const GuildMembers: Schema = {
-    type: Array,
+const Settings: Schema = {
+    type: Object,
     data: {
-        Id: {
-            name: '_id',
-            expected: String,
-            default: null,
-            extended: false
-        },
         User: {
             name: 'User',
             extended: true,
-            extends: 'FriendUser',
+            extends: 'User',
         },
-        Roles: {
-            name: 'Roles',
-            extended: true,
-            extends: 'Roles',
-        },
-        Nickname: {
-            name: 'Nickname',
+        Status: {
+            name: 'Status',
             expected: String,
             default: null,
             extended: false
         },
-        JoinedAt: {
-            name: 'JoinedAt',
+        Presence: {
+            name: 'Presence',
             expected: Number,
-            default: Date.now(),
+            default: 0,
             extended: false
         },
+        Tokens: {
+            name: 'Tokens',
+            expected: Array,
+            default: [],
+            extended: false
+        },
+        Theme: {
+            name: 'Theme',
+            expected: String,
+            default: 'dark',
+            extended: false
+        }
     },
 };
 
-export default GuildMembers;
+export default Settings;
 
-export { GuildMembers }
+export { Settings }

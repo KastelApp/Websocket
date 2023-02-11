@@ -9,11 +9,10 @@
  * GPL 3.0 Licensed
  */
 
-import { ChannelTypes, AllowedMentions } from '../../Constants';
-import type { Schema } from '../../Types/Schema';
+import type { Schema } from "../../../Types/Schema";
 
-const Channel: Schema = {
-    type: Object,
+const User: Schema = {
+    type: Array,
     data: {
         Id: {
             name: '_id',
@@ -21,56 +20,44 @@ const Channel: Schema = {
             default: null,
             extended: false
         },
-        Name: {
-            name: 'Name',
-            expected: String,
-            default: 'Unknown Channel Name',
-            extended: false
-        },
-        Description: {
-            name: 'Description',
+        AvatarHash: {
+            name: 'AvatarHash',
             expected: String,
             default: null,
             extended: false
         },
-        Type: {
-            name: 'Type',
-            expected: Number,
-            default: ChannelTypes.GuildText,
+        Email: {
+            name: 'Email',
+            expected: String,
+            default: null,
             extended: false
         },
-        Nsfw: {
-            name: 'Nsfw',
+        Username: {
+            name: 'Username',
+            expected: String,
+            default: 'Unknown Username',
+            extended: false
+        },
+        Tag: {
+            name: 'Tag',
+            expected: String,
+            default: '0000',
+            extended: false
+        },
+        TwoFa: {
+            name: 'TwoFa',
             expected: Boolean,
             default: false,
             extended: false
         },
-        AllowedMentions: {
-            name: 'AllowedMentions',
-            expected: Number,
-            default: AllowedMentions.All,
+        TwoFaVerified: {
+            name: 'TwoFaVerified',
+            expected: Boolean,
+            default: false,
             extended: false
         },
-        Parent: {
-            name: 'Parent',
-            expected: String,
-            default: null,
-            extended: false
-        },
-        Children: {
-            name: 'Children',
-            expected: Array,
-            default: null,
-            extended: false
-        },
-        Position: {
-            name: 'Position',
-            expected: Number,
-            default: 0,
-            extended: false
-        },
-        Permissions: {
-            name: 'Permissions',
+        Flags: {
+            name: 'Flags',
             expected: Number,
             default: 0,
             extended: false
@@ -78,6 +65,6 @@ const Channel: Schema = {
     },
 };
 
-export default Channel;
+export default User;
 
-export { Channel }
+export { User };
