@@ -9,38 +9,30 @@
  * GPL 3.0 Licensed
  */
 
-import { model, Schema } from 'mongoose';
+import type { Schema } from "../../../Types/Schema";
 
-const PermissionsOverides = new Schema({
-    _id: {
-        type: String,
-        required: true,
+const Mention: Schema = {
+    type: Object,
+    data: {
+        Message: {
+            name: 'Message',
+            extended: true,
+            extends: 'Message',            
+        }
     },
+};
 
-    Allow: {
-        type: String,
-        required: true,
-        default: "0"
+const Mentions: Schema = {
+    type: Array,
+    data: {
+        Message: {
+            name: 'Message',
+            extended: true,
+            extends: 'Message',            
+        }
     },
+};
 
-    Deny: {
-        type: String,
-        required: true,
-        default: "0",
-    },
+export default Mentions;
 
-    Type: { // 1 << 0 = role, 1 << 1 = member
-        type: String,
-        required: true,
-    },
-
-    Editable: { // If the permission is editable by a user (For setting Owner permissions)
-        type: Boolean,
-        required: true,
-        default: true,
-    },
-});
-
-export default model('PermissionsOverides', PermissionsOverides);
-
-export { PermissionsOverides }
+export { Mentions, Mention };

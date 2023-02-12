@@ -51,7 +51,6 @@ const MessageSchema = new Schema({
         required: true,
         ref: 'Channels',
     },
-
 });
 
 export default model('Messages', MessageSchema);

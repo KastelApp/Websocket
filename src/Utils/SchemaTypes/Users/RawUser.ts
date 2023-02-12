@@ -62,12 +62,6 @@ const RawUser: Schema = {
             default: 0,
             extended: false
         },
-        Password: {
-            name: 'Password',
-            expected: String,
-            default: null,
-            extended: false
-        },
         Banned: {
             name: 'Banned',
             expected: Boolean,

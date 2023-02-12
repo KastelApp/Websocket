@@ -3,6 +3,10 @@ export interface RawSettings {
     User: string;
     Presence: number;
     Tokens: string[];
+    Theme: string;
+    Language: string;
+    Privacy: number;
+    Mentions: string[];
     __v: number;
 }
 

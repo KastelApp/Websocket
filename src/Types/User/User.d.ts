@@ -9,6 +9,8 @@
  * GPL 3.0 Licensed
  */
 
+import FlagFields from "../../Utils/Classes/BitFields/Flags";
+
 export interface LessUser { // Less user is just less data but important data
     Id: string;
     AvatarHash: string;
@@ -18,13 +20,15 @@ export interface LessUser { // Less user is just less data but important data
     TwoFa: boolean;
     TwoFaVerified: boolean;
     Flags: number;
-    Password: string; // the hashed version of the password
     Banned: boolean;
     BannedReason: string;
     Locked: boolean;
     AccountDeletionInProgress: boolean;
     Token: string;
-    Bot: boolean;
+}
+
+export type UserData = LessUser & {
+    FlagUtils: FlagFields
 }
 
 export interface RawUser {
@@ -66,8 +70,16 @@ export interface UserAtMe {
     Username: string;
     Tag: string;
     AvatarHash: string | null;
-    PhoneNumber: string | null;
+    PhoneNumber?: string | null;
     TwoFa: boolean;
     TwoFaVerified: boolean;
     PublicFlags: number;
 }
+
+interface PartialUser {
+    Id: string;
+    AvatarHash: null;
+    Username: string;
+    Tag: string;
+    PublicFlags: number;
+  }
