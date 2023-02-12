@@ -51,7 +51,7 @@ mongoose.connect(uriGenerator(), {
 
 export default WSS
 
-const FoundPaths = Through.thr(join(__dirname, 'WsEvents'), []);
+const FoundPaths = Through.thr(join(__dirname, 'WSEvents'), []);
 
 Through.loadFiles(FoundPaths)
 
