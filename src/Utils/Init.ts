@@ -10,6 +10,7 @@
  */
 
 import { Ws } from '@kastelll/packages'
+import { HeartBeat } from '../Events/Heartbeat';
 import { Identify } from '../Events/Identify';
 
 // Below are all the events we import
@@ -24,6 +25,7 @@ export default class Init {
       return new Ws.EventsHandler(
         // V1 Below
         new Identify(),
+        new HeartBeat()
         // V1 Ends Here
       )
     }

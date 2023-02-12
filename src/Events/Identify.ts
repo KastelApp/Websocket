@@ -1,6 +1,6 @@
 import { Events, User } from '@kastelll/packages/dist/Ws';
 import type { RawSettings } from '../Types/User/Settings';
-import type { LessUser, PartialUser, UserAtMe } from '../Types/User/User';
+import type { PartialUser, UserAtMe } from '../Types/User/User';
 import { Encryption } from '../Utils/Classes/Encryption';
 import schemaData from '../Utils/SchemaData';
 import { SettingSchema } from '../Utils/Schemas/Schemas';
@@ -37,9 +37,9 @@ export class Identify extends Events {
 
     this.authRequired = false;
 
-    this.name = 'test';
+    this.name = 'Identify';
 
-    this.op = 5;
+    this.op = WsUtils.OpCodes.Auth;
 
     this.strictCheck = false;
 
@@ -143,16 +143,11 @@ export class Identify extends Events {
       User: RawUser;
     };
 
-    const SchemedUser = schemaData('RawUser', UserSettingsDecrypted.User) as LessUser;
-
-    user.UserData = {
-      ...SchemedUser,
-      FlagUtils: new FlagFields(SchemedUser.Flags),
-    };
+    const Flags = new FlagFields(UserSettingsDecrypted.User.Flags);
 
     if (
-      user.UserData.FlagUtils.hasString('WaitingOnDisableDataUpdate') ||
-      user.UserData.FlagUtils.hasString('WaitingOnAccountDeletion')
+      Flags.hasString('WaitingOnDisableDataUpdate') ||
+      Flags.hasString('WaitingOnAccountDeletion')
     ) {
       user.close(
         WsUtils.HARD_CLOSE_CODES.AUTHENTICATION_FAILED,
@@ -163,7 +158,7 @@ export class Identify extends Events {
       return;
     }
 
-    if (user.UserData.Banned || user.UserData.Locked) {
+    if (UserSettingsDecrypted.User.Banned || UserSettingsDecrypted.User.Locked) {
       user.close(WsUtils.HARD_CLOSE_CODES.AUTHENTICATION_FAILED, 'Your account is currently locked or banned.', false);
 
       return;
@@ -203,6 +198,14 @@ export class Identify extends Events {
 
     NormalData.PublicFlags = Number(FlagFields.RemovePrivateFlags(BigInt(NormalData.PublicFlags as number)));
 
+    user.UserData = {
+      ...NormalData,
+      FlagUtils: Flags,
+      Guilds: Guilds.map((guild) => guild.Id),
+    }
+
+    user.setHeartbeatInterval(WsUtils.generateHeartbeatInterval())
+
     user.send({
       op: WsUtils.OpCodes.Authed,
       d: {
@@ -238,7 +241,9 @@ export class Identify extends Events {
           Privacy: UserSettingsDecrypted.Privacy,
         },
         Mentions: UserSettingsDecrypted.Mentions,
+        SessionId: user.id,
+        HeartbeatInterval: user.heartbeatInterval
       },
-    });
+    }, false);
   }
 }

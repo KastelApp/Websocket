@@ -27,8 +27,9 @@ export interface LessUser { // Less user is just less data but important data
     Token: string;
 }
 
-export type UserData = LessUser & {
+export type UserData = UserAtMe & {
     FlagUtils: FlagFields
+    Guilds: string[];
 }
 
 export interface RawUser {
