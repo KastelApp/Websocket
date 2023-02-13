@@ -21,7 +21,7 @@
   "repository": "https://github.com/Kastelll/ws",
   "packageManager": "yarn@3.2.4",
   "dependencies": {
-    "@kastelll/packages": "^2.2.2",
+    "@kastelll/packages": "^2.2.5",
     "chalk": "4",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.0",

@@ -44,8 +44,8 @@ new Init().create(); // This loads all the events
 
 mongoose.set('strictQuery', true);
 mongoose.connect(uriGenerator(), {
-}).then(() => console.info('MongoDB connected!')).catch((e) => {
-  console.error('Failed to connect to MongoDB', e);
+}).then(() => console.info('[Database] MongoDB connected!')).catch((e) => {
+  console.error('[Database] Failed to connect to MongoDB', e);
   process.exit();
 });
 

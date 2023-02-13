@@ -204,7 +204,9 @@ export class Identify extends Events {
       Guilds: Guilds.map((guild) => guild.Id),
     }
 
-    user.setHeartbeatInterval(WsUtils.generateHeartbeatInterval())
+    user.setHeartbeatInterval(WsUtils.generateHeartbeatInterval());
+    
+    user.setLastHeartbeat(Date.now());
 
     user.send({
       op: WsUtils.OpCodes.Authed,
