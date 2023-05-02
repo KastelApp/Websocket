@@ -30,7 +30,8 @@ console.log(
 A Chatting Application
 Running version ${
     Relative.Version ? `v${Relative.Version}` : "Unknown version"
-  } of Kastel's Websocket. Node.js version ${process.version}\n`)
+  } of Kastel's Backend. Node.js version ${process.version}
+If you would like to support this project please consider donating to https://opencollective.com/kastel\n`)
 );
 
 const WSS = new Ws.WebsocketServer( // We Initialize the WebsocketServer class
@@ -41,8 +42,8 @@ const WSS = new Ws.WebsocketServer( // We Initialize the WebsocketServer class
 
 new Init().create(); // This loads all the events
 
-
 mongoose.set('strictQuery', true);
+
 mongoose.connect(uriGenerator(), {
 }).then(() => console.info('[Database] MongoDB connected!')).catch((e) => {
   console.error('[Database] Failed to connect to MongoDB', e);

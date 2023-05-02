@@ -13,6 +13,22 @@
             "icon": "a_123456789012345678",
             "owner": true,
             "permissions": 8,
+            "members": [{
+                "id": "123456789012345678",
+                "username": "DarkerInk",
+                "discriminator": "1234",
+                "avatar": "a_123456789012345678",
+                "status": "online",
+                "game": {
+                    "name": "DarkerInks Amazing Game",
+                    "type": 0
+                },
+                "roles": ["123456789012345678"],
+                "joinedAt": "2016-01-01T00:00:00.000Z",
+                "deaf": false,
+                "mute": false,
+                "owner": true
+            }],
             "channels": [{
                 "name": "Amazing Channel",
                 "id": "123456789012345678",
@@ -36,7 +52,22 @@
             "mentions": [{
                 "channelId": "123456789012345678",
                 "count": 1
-            }]
+            }],
+            "lazy": false
+        }, {
+            "id": "123456789012345679",
+            "name": "DarkerInks Lazy Guild",
+            "icon": "a_123456789012345679",
+            "owner": false,
+            "permissions": 8,
+            "members": [],
+            "channels": [],
+            "roles": [],
+            "mentions": [{
+                "channelId": "123456789012345678",
+                "count": 1
+            }],
+            "lazy": true
         }],
         "settings": {
             "theme": "dark",

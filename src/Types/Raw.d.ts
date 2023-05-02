@@ -155,38 +155,54 @@ interface GroupChat {
 }
 
 interface Friend {
-    Sender: string;
-    Receiver: string;
-    SenderNickname: string;
-    ReceiverNickname: string;
-    Flags: number;
+  Sender: string;
+  Receiver: string;
+  SenderNickname: string;
+  ReceiverNickname: string;
+  Flags: number;
 }
 
 interface Message {
-    _id: string;
-    Author: string;
-    Content: string;
-    AllowedMentions: number;
-    CreatedDate: number;
-    UpdatedDate: number;
-    Channel: string;
+  _id: string;
+  Author: string;
+  Content: string;
+  AllowedMentions: number;
+  CreatedDate: number;
+  UpdatedDate: number;
+  Channel: string;
+  Nonce: string;
+  Flags: number;
+  Embeds: {
+    Title?: string;
+    Description?: string;
+    Color?: number;
+    Timestamp?: number;
+    Footer?: {
+      Text: string;
+    }[];
+    Fields?: {
+      Title: string;
+      Value: string;
+    }[];
+  }[];
+  Files: string[];
 }
 
 export {
-    Ban,
-    Channel,
-    Emoji,
-    Guild,
-    GuildMember,
-    Invite,
-    PermissionsOverides,
-    Role,
-    Webhook,
-    File,
-    Settings,
-    Dm,
-    User,
-    GroupChat,
-    Friend,
-    Message
-}
+  Ban,
+  Channel,
+  Emoji,
+  Guild,
+  GuildMember,
+  Invite,
+  PermissionsOverides,
+  Role,
+  Webhook,
+  File,
+  Settings,
+  Dm,
+  User,
+  GroupChat,
+  Friend,
+  Message,
+};

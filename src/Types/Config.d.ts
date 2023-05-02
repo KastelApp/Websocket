@@ -18,6 +18,7 @@ export interface WebsocketConfig {
     Password: string;
     AllowNonLocalIp: boolean;
     LocalIps: string[];
+    ForceHeartbeats: boolean;
   }
 }
 

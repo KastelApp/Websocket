@@ -30,6 +30,7 @@ export interface LessUser { // Less user is just less data but important data
 export type UserData = UserAtMe & {
     FlagUtils: FlagFields
     Guilds: string[];
+    AllowedChannels?: string[]; // Channels they can receive messages from
 }
 
 export interface RawUser {
@@ -65,7 +66,7 @@ interface IPopulatedUserWJ {
 export type PopulatedUserWJ = RawUser & IPopulatedUserWJ;
 
 export interface UserAtMe {
-    id: string;
+    Id: string;
     Email: string;
     EmailVerified: boolean;
     Username: string;

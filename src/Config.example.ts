@@ -9,6 +9,7 @@ const Server: WebsocketConfig = {
         AllowNonLocalIp: false,
         Password: '',
         LocalIps: [],
+        ForceHeartbeats: true, // This makes it where the system has to send a heartbeat in a random time (just like clients)
     }
 };
 
