@@ -1,46 +1,47 @@
-import { Events, User } from '@kastelll/packages/dist/Ws';
-import { WsUtils } from '../../Utils/Classes/WsUtils';
+import type { User } from '@kastelll/core';
+import { Events, AuthCodes, HardCloseCodes } from '@kastelll/core';
+import { OpCodes } from '../../Utils/Classes/WsUtils.js';
 
 export class HeartBeat extends Events {
-  constructor() {
+  public constructor() {
     super();
 
-    this.authRequired = true;
+    this.AuthRequired = true;
 
-    this.name = 'HeartBeat';
+    this.Name = 'HeartBeat';
 
-    this.op = WsUtils.OpCodes.HeartBeat;
+    this.Op = OpCodes.HeartBeat;
 
-    this.strictCheck = false;
+    this.StrictCheck = false;
 
-    this.strictCheck = true;
+    this.StrictCheck = true;
 
-    this.version = 0;
+    this.Version = 0;
 
-    this.allowedAuthTypes = WsUtils.AUTH_CODES.SYSTEM;
+    this.AllowedAuthTypes = AuthCodes.System;
   }
 
-  override async execute(
+  public override async Execute(
     user: User,
     data: {
-        Sequence: number;
+      Sequence: number;
     },
   ) {
+    if (user.Seq !== data.Sequence) {
+      console.log(`Expected ${user.Seq} but got ${data.Sequence}`);
 
-    if (user.seq !== data.Sequence) {
+      user.close(HardCloseCodes.InvalidSeq, 'Invalid sequence', false);
 
-        console.log(`Expected ${user.seq} but got ${data.Sequence}`)
-
-        user.close(WsUtils.HARD_CLOSE_CODES.INVALID_SEQ, 'Invalid sequence', false)
-
-        return;
+      return;
     }
 
     user.setLastHeartbeat(Date.now());
 
-    user.send({
-        op: WsUtils.OpCodes.HeartBeatAck,
-    }, false)
-
+    user.send(
+      {
+        op: OpCodes.HeartBeatAck,
+      },
+      false,
+    );
   }
 }

@@ -9,79 +9,80 @@
  * GPL 3.0 Licensed
  */
 
-import FlagFields from "../../Utils/Classes/BitFields/Flags";
+import type FlagFields from '../../Utils/Classes/BitFields/Flags';
 
-export interface LessUser { // Less user is just less data but important data
-    Id: string;
-    AvatarHash: string;
-    Email: string;
-    Username: string;
-    Tag: string;
-    TwoFa: boolean;
-    TwoFaVerified: boolean;
-    Flags: number;
-    Banned: boolean;
-    BannedReason: string;
-    Locked: boolean;
-    AccountDeletionInProgress: boolean;
-    Token: string;
+export interface LessUser {
+  AccountDeletionInProgress: boolean;
+  AvatarHash: string;
+  Banned: boolean;
+  BannedReason: string;
+  Email: string;
+  Flags: number;
+  // Less user is just less data but important data
+  Id: string;
+  Locked: boolean;
+  Tag: string;
+  Token: string;
+  TwoFa: boolean;
+  TwoFaVerified: boolean;
+  Username: string;
 }
 
 export type UserData = UserAtMe & {
-    FlagUtils: FlagFields
-    Guilds: string[];
-    AllowedChannels?: string[]; // Channels they can receive messages from
-}
+  AllowedChannels?: string[];
+  FlagUtils: FlagFields;
+  Guilds: string[]; // Channels they can receive messages from
+};
 
 export interface RawUser {
-    _id: string,
-    Email: string,
-    EmailVerified: boolean,
-    Username: string,
-    Tag: string,
-    AvatarHash: string | null,
-    Password?: string | null,
-    PhoneNumber: string | null,
-    TwoFa: boolean,
-    TwoFaVerified: boolean,
-    TwoFaSecret: string | null,
-    Ips: string[],
-    Flags: number,
-    Guilds: string[],
-    Dms: string[],
-    GroupChats: string[],
-    Bots: string[],
-    Banned: boolean,
-    BanReason: string | null,
-    Locked: boolean,
-    AccountDeletionInProgress: boolean,
-    __v: number
+  AccountDeletionInProgress: boolean;
+  AvatarHash: string | null;
+  BanReason: string | null;
+  Banned: boolean;
+  Bots: string[];
+  Dms: string[];
+  Email: string;
+  EmailVerified: boolean;
+  Flags: number;
+  GroupChats: string[];
+  Guilds: string[];
+  Ips: string[];
+  Locked: boolean;
+  Password?: string | null;
+  PhoneNumber: string | null;
+  Tag: string;
+  TwoFa: boolean;
+  TwoFaSecret: string | null;
+  TwoFaVerified: boolean;
+  Username: string;
+  __v: number;
+  _id: string;
 }
 
 interface IPopulatedUserWJ {
-    toJSON(): RawUser
-    toObject(): RawUser
-} 
+  toJSON(): RawUser;
+  toObject(): RawUser;
+}
 
-export type PopulatedUserWJ = RawUser & IPopulatedUserWJ;
+export type PopulatedUserWJ = IPopulatedUserWJ & RawUser;
 
 export interface UserAtMe {
-    Id: string;
-    Email: string;
-    EmailVerified: boolean;
-    Username: string;
-    Tag: string;
-    AvatarHash: string | null;
-    PhoneNumber?: string | null;
-    TwoFa: boolean;
-    TwoFaVerified: boolean;
-    PublicFlags: number;
+  AvatarHash: string | null;
+  Email: string;
+  EmailVerified: boolean;
+  Id: string;
+  PhoneNumber?: string | null;
+  PublicFlags: number;
+  Tag: string;
+  TwoFa: boolean;
+  TwoFaVerified: boolean;
+  Username: string;
 }
 
 interface PartialUser {
-    Id: string;
-    AvatarHash: null;
-    Username: string;
-    Tag: string;
-    PublicFlags: number;
-  }
+  AvatarHash: null;
+  Id: string;
+  PublicFlags: number;
+  Tag: string;
+  Username: string;
+}

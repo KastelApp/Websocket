@@ -10,51 +10,51 @@
  */
 
 export interface WebsocketConfig {
-  Port: number;
   AllowedIps: string[];
   CloseOnError: boolean;
   MaxConnections: number;
+  Port: number;
   SystemLoginInfo: {
-    Password: string;
     AllowNonLocalIp: boolean;
-    LocalIps: string[];
     ForceHeartbeats: boolean;
-  }
+    LocalIps: string[];
+    Password: string;
+  };
 }
 
 export interface Encryption {
   Algorithm: string;
   InitVector: string;
-  SecurityKey: string;
   JwtKey: string;
+  SecurityKey: string;
 }
 
 export interface Redis {
+  Db: number | string;
   Host: string;
+  Password: string;
   Port: number | string;
   User: string;
-  Password: string;
-  Db: number | string;
 }
 
 export interface MongoDB {
-  User: string;
-  Host: string;
-  Port: string | number;
-  Password: string;
-  Database: string;
   AuthSource: string;
+  Database: string;
+  Host: string;
+  Password: string;
+  Port: number | string;
   Uri: string;
+  User: string;
 }
 export interface Regexes {
-  password: RegExp;
   email: RegExp;
+  password: RegExp;
 }
 
 export interface Config {
   Encryption: Encryption;
-  Server: WebsocketConfig;
-  Redis: Redis;
   MongoDB: MongoDB;
+  Redis: Redis;
   Regexes: Regexes;
+  Server: WebsocketConfig;
 }

@@ -1,68 +1,68 @@
-import { Events, User } from '@kastelll/packages/dist/Ws';
+import type { User } from '@kastelll/core';
+import { Events, AuthCodes } from '@kastelll/core';
 import WSS from '../../..';
-import { WsUtils } from '../../../Utils/Classes/WsUtils';
+import { SystemOpCodes, OpCodes } from '../../../Utils/Classes/WsUtils.js';
 // import WSS from '../../../index';
 
 // This is Sent from the API to the System, then System sends it to the Client
 export class UpdateMessages extends Events {
-  constructor() {
+  public constructor() {
     super();
 
-    this.authRequired = true;
+    this.AuthRequired = true;
 
-    this.name = 'UpdateMessages';
+    this.Name = 'UpdateMessages';
 
-    this.op = WsUtils.OpCodes.MessageUpdate;
+    this.Op = OpCodes.MessageUpdate;
 
-    this.strictCheck = true;
+    this.StrictCheck = true;
 
-    this.version = 0;
+    this.Version = 0;
 
-    this.allowedAuthTypes = WsUtils.AUTH_CODES.SYSTEM;
+    this.AllowedAuthTypes = AuthCodes.System;
   }
 
-  override async execute(
+  public override async Execute(
     user: User,
     data: {
       Message: {
-        Id: string;
+        AllowedMentions: number;
         Author: {
           Id: string;
+          JoinedAt: number;
+          Nickname: string;
+          Roles: string[];
           User: {
-                Id: string;
-                AvatarHash: string;
-                Username: string;
-                Tag: string;
-                PublicFlags: number;
-              };
-              Roles: string[];
-              Nickname: string;
-              JoinedAt: number;
-            }
-            Content: string;
-            ChannelId: string;
-            AllowedMentions: number;
+            AvatarHash: string;
+            Id: string;
+            PublicFlags: number;
+            Tag: string;
+            Username: string;
+          };
+        };
+        ChannelId: string;
+        Content: string;
         CreatedAt: number;
-        UpdatedAt: number;
         Flags: number;
-    }
+        Id: string;
+        UpdatedAt: number;
+      };
     },
   ) {
-
     for (const Client of WSS.connectedUsers.values()) {
-      if (!(Client.authType === WsUtils.AUTH_CODES.USER)) continue;
+      if (!(Client.AuthType === AuthCodes.User)) continue;
 
-        if (Client.UserData?.AllowedChannels?.includes(data.Message.ChannelId)) {
-            Client.send({
-                op: WsUtils.OpCodes.MessageUpdate,
-                event: "MessageUpdate",
-                d: data.Message
-            })
-        }
+      if (Client.UserData?.AllowedChannels?.includes(data.Message.ChannelId)) {
+        Client.send({
+          op: OpCodes.MessageUpdate,
+          event: 'MessageUpdate',
+          d: data.Message,
+        });
+      }
     }
 
     user.send({
-        op: WsUtils.SystemOpCodes.UpdateMessageAck
-    })
+      op: SystemOpCodes.UpdateMessageAck,
+    });
   }
 }

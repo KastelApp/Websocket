@@ -9,65 +9,66 @@
  * GPL 3.0 Licensed
  */
 
-import { GuildMemberFlags as GMF } from '../../../Constants'
+import { GuildMemberFlags as GMF } from '../../../Constants';
 
 class GuildMemberFlags {
-    bits: number
-    constructor(bits: number) {
-        this.bits = bits
-    }
+  bits: number;
 
-    has(bit: number) {
-        return (this.bits & bit) === bit
-    }
+  constructor(bits: number) {
+    this.bits = bits;
+  }
 
-    add(bit: number): this {
-        if (this.has(bit)) return this
-        this.bits |= bit
-        return this
-    }
+  has(bit: number) {
+    return (this.bits & bit) === bit;
+  }
 
-    remove(bit: number): this {
-        if (!this.has(bit)) return this
-        this.bits ^= bit
-        return this
-    }
+  add(bit: number): this {
+    if (this.has(bit)) return this;
+    this.bits |= bit;
+    return this;
+  }
 
-    serialize(): number {
-        return this.bits
-    }
+  remove(bit: number): this {
+    if (!this.has(bit)) return this;
+    this.bits ^= bit;
+    return this;
+  }
 
-    toJSON(): Record<keyof typeof GMF, boolean> {
-        return Object.keys(GMF).reduce((obj, key) => {
-            obj[key as keyof typeof GMF] = this.has(GMF[key as keyof typeof GMF])
-            return obj
-        }, {} as Record<keyof typeof GMF, boolean>)
-    }
+  serialize(): number {
+    return this.bits;
+  }
 
-    toArray(): string[] {
-        return Object.keys(GMF).reduce((arr, key) => {
-            if (this.has(GMF[key as keyof typeof GMF])) arr.push(key)
-            return arr
-        }, [] as string[])
-    }
+  toJSON(): Record<keyof typeof GMF, boolean> {
+    return Object.keys(GMF).reduce<Record<keyof typeof GMF, boolean>>((obj, key) => {
+      obj[key as keyof typeof GMF] = this.has(GMF[key as keyof typeof GMF]);
+      return obj;
+    }, {});
+  }
 
-    hasString(bit: keyof typeof GMF) {
-        return this.has(GMF[bit as keyof typeof GMF])
-    }
+  toArray(): string[] {
+    return Object.keys(GMF).reduce<string[]>((arr, key) => {
+      if (this.has(GMF[key as keyof typeof GMF])) arr.push(key);
+      return arr;
+    }, []);
+  }
 
-    static deserialize(bits: number): GuildMemberFlags {
-        return new GuildMemberFlags(Number(bits))
-    }
+  hasString(bit: keyof typeof GMF) {
+    return this.has(GMF[bit as keyof typeof GMF]);
+  }
 
-    static get FlagFields(): typeof GMF {
-        return GMF
-    }
+  static deserialize(bits: number): GuildMemberFlags {
+    return new GuildMemberFlags(Number(bits));
+  }
 
-    static get FlagFieldsArray(): (keyof typeof GMF)[] {
-        return Object.keys(GMF) as (keyof typeof GMF)[]
-    }
+  static get FlagFields(): typeof GMF {
+    return GMF;
+  }
+
+  static get FlagFieldsArray(): (keyof typeof GMF)[] {
+    return Object.keys(GMF) as (keyof typeof GMF)[];
+  }
 }
 
-export default GuildMemberFlags
+export default GuildMemberFlags;
 
-export { GuildMemberFlags }
+export { GuildMemberFlags };

@@ -1,62 +1,63 @@
-import { Events, User } from '@kastelll/packages/dist/Ws';
-import { WsUtils } from '../../../Utils/Classes/WsUtils';
+import type { User } from '@kastelll/core';
+import { Events, AuthCodes } from '@kastelll/core';
+import { SystemOpCodes, OpCodes } from '../../../Utils/Classes/WsUtils.js';
 import WSS from '../../../index';
 
 // This is Sent from the API to the System, then System sends it to the Client
 export class NewMessage extends Events {
-  constructor() {
+  public constructor() {
     super();
 
-    this.authRequired = true;
+    this.AuthRequired = true;
 
-    this.name = 'NewMessage';
+    this.Name = 'NewMessage';
 
-    this.op = WsUtils.OpCodes.MessageCreate;
+    this.Op = OpCodes.MessageCreate;
 
-    this.strictCheck = true;
+    this.StrictCheck = true;
 
-    this.version = 0;
+    this.Version = 0;
 
-    this.allowedAuthTypes = WsUtils.AUTH_CODES.SYSTEM;
+    this.AllowedAuthTypes = AuthCodes.System;
   }
 
-  override async execute(
+  public override async Execute(
     user: User,
     data: {
-        Message: {
+      Message: {
+        AllowedMentions: number;
+        Author: {
+          Avatar: string;
+          Discriminator: string;
           Id: string;
-          Author: {
-              Id: string;
-              Username: string;
-              Discriminator: string;
-              Avatar: string;
-              PublicFlags: number;
-          }
-          Content: string;
-          ChannelId: string;
-          AuthorId: string;
-          Timestamp: number;
-          AllowedMentions: number;
-          Nonce: string;
-          Flags: number;
-          System: boolean;
-      }
+          PublicFlags: number;
+          Username: string;
+        };
+        AuthorId: string;
+        ChannelId: string;
+        Content: string;
+        Flags: number;
+        Id: string;
+        Nonce: string;
+        System: boolean;
+        Timestamp: number;
+      };
     },
   ) {
     for (const Client of WSS.connectedUsers.values()) {
-      if (!(Client.authType === WsUtils.AUTH_CODES.USER)) continue;
+      if (!(Client.AuthType === AuthCodes.User)) continue;
 
-        if (Client.UserData?.AllowedChannels?.includes(data.Message.ChannelId)) {
-            Client.send({
-                op: WsUtils.OpCodes.MessageCreate,
-                event: "MessageCreate",
-                d: data.Message
-            })
-        }
+      if (Client.UserData?.AllowedChannels?.includes(data.Message.ChannelId)) {
+        Client.send({
+          op: OpCodes.MessageCreate,
+          event: 'MessageCreate',
+          d: data.Message,
+        });
+      }
     }
 
     user.send({
-        op: WsUtils.SystemOpCodes.MessageCreateAck
-    })
+      op: SystemOpCodes.MessageCreateAck,
+    });
   }
 }

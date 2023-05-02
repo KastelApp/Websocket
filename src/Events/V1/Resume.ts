@@ -1,30 +1,27 @@
-import { Events, User } from '@kastelll/packages/dist/Ws';
-import { WsUtils } from '../../Utils/Classes/WsUtils';
+import type { User } from '@kastelll/core';
+import { Events } from '@kastelll/core';
+import { OpCodes } from '../../Utils/Classes/WsUtils.js';
 
 export class Resume extends Events {
-  constructor() {
+  public constructor() {
     super();
 
-    this.authRequired = false;
+    this.AuthRequired = false;
 
-    this.name = 'Resume';
+    this.Name = 'Resume';
 
-    this.op = WsUtils.OpCodes.Resume;
+    this.Op = OpCodes.Resume;
 
-    this.strictCheck = false;
+    this.StrictCheck = false;
 
-    this.version = 1;
+    this.Version = 1;
   }
 
-  override async execute(
+  public override async Execute(
     user: User,
     data: {
-        Sequence: number;
-        SessionId: string;
+      Sequence: number;
+      SessionId: string;
     },
-  ) {
-
-    return;
-
-  }
+  ) {}
 }

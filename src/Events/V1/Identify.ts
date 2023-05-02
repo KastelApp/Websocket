@@ -1,66 +1,65 @@
-import { Events, User } from '@kastelll/packages/dist/Ws';
+import type { User } from '@kastelll/core';
+import { Events, HardCloseCodes, WsUtils } from '@kastelll/core';
+import type { User as RawUser, Guild, Friend, GuildMember, Channel, Role, PermissionsOverides } from '../../Types/Raw';
 import type { RawSettings } from '../../Types/User/Settings';
 import type { PartialUser, UserAtMe } from '../../Types/User/User';
-import { Encryption } from '../../Utils/Classes/Encryption';
-import schemaData from '../../Utils/SchemaData';
-import { SettingSchema } from '../../Utils/Schemas/Schemas';
-import Token from '../../Utils/Classes/Token';
-import { WsUtils } from '../../Utils/Classes/WsUtils';
-import FlagFields from '../../Utils/Classes/BitFields/Flags';
+import FlagFields from '../../Utils/Classes/BitFields/Flags.js';
+import { Encryption } from '../../Utils/Classes/Encryption.js';
+import Token from '../../Utils/Classes/Token.js';
+import UserUtils from '../../Utils/Classes/UserUtils.js';
+import { OpCodes } from '../../Utils/Classes/WsUtils.js';
+import schemaData from '../../Utils/SchemaData.js';
+import { SettingSchema } from '../../Utils/Schemas/Schemas.js';
 
-import type { User as RawUser, Guild, Friend, GuildMember, Channel, Role, PermissionsOverides } from '../../Types/Raw';
-import UserUtils from '../../Utils/Classes/UserUtils';
-
-type FixedGuildMember = Omit<GuildMember, 'User' | 'Roles'> & {
+type FixedGuildMember = Omit<GuildMember, 'Roles' | 'User'> & {
+  Roles: Role[];
   User: PartialUser;
-  Roles: Role[]
 };
 
-type FixedChannel = (Channel & {
+type FixedChannel = Channel & {
   PermissionsOverides: PermissionsOverides[];
-})
+};
 
-type FixedGuild = Omit<Guild, "Owner" | "CoOwners" | "Members" | "Channels" | "Roles"> & {
-  Owner: FixedGuildMember,
-  CoOwners: FixedGuildMember[],
-  Members: FixedGuildMember[],
-  Channels: FixedChannel[],
-  Roles: Role[]
-}
+type FixedGuild = Omit<Guild, 'Channels' | 'CoOwners' | 'Members' | 'Owner' | 'Roles'> & {
+  Channels: FixedChannel[];
+  CoOwners: FixedGuildMember[];
+  Members: FixedGuildMember[];
+  Owner: FixedGuildMember;
+  Roles: Role[];
+};
 
 type UpToDateUser = RawUser & {
   Guilds: FixedGuild[];
 };
 
 export class Identify extends Events {
-  constructor() {
+  public constructor() {
     super();
 
-    this.authRequired = false;
+    this.AuthRequired = false;
 
-    this.name = 'Identify';
+    this.Name = 'Identify';
 
-    this.op = WsUtils.OpCodes.Auth;
+    this.Op = OpCodes.Auth;
 
-    this.strictCheck = false;
+    this.StrictCheck = false;
 
-    this.version = 1;
+    this.Version = 1;
   }
 
-  override async execute(
+  public override async Execute(
     user: User,
     data: {
-      Token: string;
       Settings: {
         // idk what else currently
         Compress: boolean; // Whether the client supports compression
         Intents?: number; // The intents the client has (WIP)
       };
+      Token: string;
     },
   ) {
-
-    if (user.authed) {
-      user.close(WsUtils.HARD_CLOSE_CODES.ALREADY_AUTHENTICATED, 'Already authed', false);
+    if (user.Authed) {
+      user.close(HardCloseCodes.AlreadyAuthenticated, 'Already authed', false);
 
       return;
     }
@@ -70,7 +69,7 @@ export class Identify extends Events {
     }
 
     if (!data.Token) {
-      user.close(WsUtils.HARD_CLOSE_CODES.AUTHENTICATION_FAILED, 'Invalid token', false);
+      user.close(HardCloseCodes.AuthenticationFailed, 'Invalid token', false);
 
       return;
     }
@@ -78,7 +77,9 @@ export class Identify extends Events {
     const ValidateToken = Token.ValidateToken(data.Token);
 
     if (!ValidateToken) {
-      user.close(WsUtils.HARD_CLOSE_CODES.AUTHENTICATION_FAILED, 'Invalid token', false);
+      // user.close(WsUtils.HARD_CLOSE_CODES.AUTHENTICATION_FAILED, 'Invalid token', false);
+
+      user.close(HardCloseCodes.AuthenticationFailed, 'Invalid token', false);
 
       return;
     }
@@ -88,7 +89,9 @@ export class Identify extends Events {
     if (!TokenData) {
       // This should never happen, Since ValidateToken is true and
       // the only way for it to be true is if it was decoded successfully (and some other checks)
-      user.close(WsUtils.HARD_CLOSE_CODES.UNKNOWN_ERROR, 'Unknown error', false);
+      // user.close(WsUtils.HARD_CLOSE_CODES.UNKNOWN_ERROR, 'Unknown error', false);
+
+      user.close(HardCloseCodes.UnknownError, 'Unknown error', false);
 
       return;
     }
@@ -97,8 +100,10 @@ export class Identify extends Events {
       User: Encryption.encrypt(TokenData.Snowflake),
     });
 
-    if (!UsersSettings || !UsersSettings?.Tokens?.includes(Encryption.encrypt(data.Token))) {
-      user.close(WsUtils.HARD_CLOSE_CODES.AUTHENTICATION_FAILED, 'Invalid token', false);
+    if (!UsersSettings?.Tokens?.includes(Encryption.encrypt(data.Token))) {
+      // user.close(WsUtils.HARD_CLOSE_CODES.AUTHENTICATION_FAILED, 'Invalid token', false);
+
+      user.close(HardCloseCodes.AuthenticationFailed, 'Invalid token', false);
 
       return;
     }
@@ -109,18 +114,18 @@ export class Identify extends Events {
 
     await UsersSettings.populate<{
       User: RawUser & {
-        Guilds: Guild[];
         Friends: Friend[];
+        Guilds: Guild[];
       };
     }>(['User.Guilds', 'User.Friends']);
 
     await UsersSettings.populate<{
       User: RawUser & {
         Guilds: Guild & {
-          Owner: GuildMember;
-          Members: GuildMember[];
           Channels: Channel[];
           CoOwners: GuildMember[];
+          Members: GuildMember[];
+          Owner: GuildMember;
           Roles: Role[];
         };
       };
@@ -140,7 +145,7 @@ export class Identify extends Events {
       'User.Guilds.Owner.Roles',
       'User.Guilds.CoOwners.User',
       'User.Guilds.CoOwners.Roles',
-      'User.Guilds.Members.User',      
+      'User.Guilds.Members.User',
     ]);
 
     const UserSettingsDecrypted = Encryption.completeDecryption({
@@ -152,12 +157,15 @@ export class Identify extends Events {
 
     const Flags = new FlagFields(UserSettingsDecrypted.User.Flags);
 
-    if (
-      Flags.hasString('WaitingOnDisableDataUpdate') ||
-      Flags.hasString('WaitingOnAccountDeletion')
-    ) {
+    if (Flags.hasString('WaitingOnDisableDataUpdate') || Flags.hasString('WaitingOnAccountDeletion')) {
+      // user.close(
+      //   WsUtils.HARD_CLOSE_CODES.AUTHENTICATION_FAILED,
+      //   'Your account is currently being deleted or it is disabled.',
+      //   false,
+      // );
+
       user.close(
-        WsUtils.HARD_CLOSE_CODES.AUTHENTICATION_FAILED,
+        HardCloseCodes.AuthenticationFailed,
         'Your account is currently being deleted or it is disabled.',
         false,
       );
@@ -166,7 +174,9 @@ export class Identify extends Events {
     }
 
     if (UserSettingsDecrypted.User.Banned || UserSettingsDecrypted.User.Locked) {
-      user.close(WsUtils.HARD_CLOSE_CODES.AUTHENTICATION_FAILED, 'Your account is currently locked or banned.', false);
+      // user.close(WsUtils.HARD_CLOSE_CODES.AUTHENTICATION_FAILED, 'Your account is currently locked or banned.', false);
+
+      user.close(HardCloseCodes.AuthenticationFailed, 'Your account is currently locked or banned.', false);
 
       return;
     }
@@ -175,101 +185,112 @@ export class Identify extends Events {
 
     const NormalData = schemaData('User', UserSettingsDecrypted.User) as UserAtMe;
 
-    const Guilds = schemaData('Guilds', Encryption.completeDecryption(UserSettingsDecrypted.User.Guilds)) as (Omit<FixedGuild, | "_id" | "Members" | "Channels" | "Roles" | "Owner" | "CoOwners"> & {
+    const Guilds = schemaData('Guilds', Encryption.completeDecryption(UserSettingsDecrypted.User.Guilds)) as (Omit<
+      FixedGuild,
+      '_id' | 'Channels' | 'CoOwners' | 'Members' | 'Owner' | 'Roles'
+    > & {
+      Channels: (Omit<FixedChannel, '_id'> & {
+        Id: string;
+      })[];
+      CoOwners: (Omit<FixedGuildMember, '_id' | 'Roles'> & {
+        Id: string;
+        Roles: (Omit<Role, '_id'> & {
+          Id: string;
+        })[];
+      })[];
       Id: string;
-      Members: (Omit<FixedGuildMember, "_id" | "Roles"> & {
+      Members: (Omit<FixedGuildMember, '_id' | 'Roles'> & {
         Id: string;
-        Roles: (Omit<Role, "_id"> & {
+        Roles: (Omit<Role, '_id'> & {
           Id: string;
         })[];
       })[];
-      Channels: (Omit<FixedChannel, "_id"> & {
+      Owner: Omit<FixedGuildMember, '_id' | 'Roles'> & {
         Id: string;
-      })[];
-      Roles: (Omit<Role, "_id"> & {
-        Id: string;
-      })[];
-      Owner: (Omit<FixedGuildMember, "_id" | "Roles"> & {
-        Id: string;
-        Roles: (Omit<Role, "_id"> & {
+        Roles: (Omit<Role, '_id'> & {
           Id: string;
         })[];
-      });
-      CoOwners: (Omit<FixedGuildMember, "_id" | "Roles"> & {
+      };
+      Roles: (Omit<Role, '_id'> & {
         Id: string;
-        Roles: (Omit<Role, "_id"> & {
-          Id: string;
-        })[];
       })[];
     })[];
 
     NormalData.PublicFlags = Number(FlagFields.RemovePrivateFlags(BigInt(NormalData.PublicFlags as number)));
 
-    
     user.UserData = {
       ...NormalData,
       FlagUtils: Flags,
       Guilds: Guilds.map((guild) => guild.Id),
-    }
-    
+    };
+
     const Utils = new UserUtils(data.Token, user);
-    
-    user.UserData.AllowedChannels = (await Utils.ChannelsCanSendMessagesIn(true)).filter((c) => c.CanSend).map((c) => c.ChannelId);
-    
-    user.setHeartbeatInterval(WsUtils.generateHeartbeatInterval());
-    
+
+    // eslint-disable-next-line require-atomic-updates -- Check back later
+    user.UserData.AllowedChannels = (await Utils.ChannelsCanSendMessagesIn(true))
+      .filter((chan) => chan.CanSend)
+      .map((chan) => chan.ChannelId);
+
+    user.setHeartbeatInterval(WsUtils.GenerateHeartbeatInterval());
+
     user.setLastHeartbeat(Date.now());
 
-    console.log(user.UserData)
+    console.log(user.UserData);
 
-    user.send({
-      op: WsUtils.OpCodes.Authed,
-      d: {
-        User: NormalData,
-        Guilds: Guilds.map((guild) => {
-          return {
-            ...guild,
-            Members: guild.Members.filter((member) => member.Id === user.UserData.Id).map((member) => {
-              return {
-                ...member,
+    user.send(
+      {
+        op: OpCodes.Authed,
+        // eslint-disable-next-line id-length
+        d: {
+          User: NormalData,
+          Guilds: Guilds.map((guild) => {
+            return {
+              ...guild,
+              Members: guild.Members.filter((member) => member.Id === user.UserData.Id).map((member) => {
+                return {
+                  ...member,
+                  User: {
+                    ...member.User,
+                    PublicFlags: Number(FlagFields.RemovePrivateFlags(BigInt(member.User.PublicFlags as number))),
+                  },
+                  // Members roles is broken so we just want to default tot he UserSettingsDecrypted roles
+                  Roles: (UserSettingsDecrypted.User.Guilds as unknown as FixedGuild[])
+                    .find((gl) => gl._id === guild.Id)
+                    ?.Roles.map((role) => role._id) as string[],
+                };
+              }),
+              Owner: {
+                ...guild.Owner,
+                // we do this as we just want the role ids not the populated roles
+                Roles: guild.Owner.Roles.map((role) => role.Id),
                 User: {
-                  ...member.User,
-                  PublicFlags: Number(FlagFields.RemovePrivateFlags(BigInt(member.User.PublicFlags as number))),
+                  ...guild.Owner.User,
+                  PublicFlags: Number(FlagFields.RemovePrivateFlags(BigInt(guild.Owner.User.PublicFlags as number))),
                 },
-                // Members roles is broken so we just want to default tot he UserSettingsDecrypted roles
-                Roles: (UserSettingsDecrypted.User.Guilds as unknown as FixedGuild[]).find((g) => g._id === guild.Id)?.Roles.map((r) => r._id) as string[],
-              }
-            }),
-            Owner: {
-              ...guild.Owner,
-              // we do this as we just want the role ids not the populated roles
-              Roles: guild.Owner.Roles.map((r) => r.Id),
-              User: {
-                ...guild.Owner.User,
-                PublicFlags: Number(FlagFields.RemovePrivateFlags(BigInt(guild.Owner.User.PublicFlags as number))),
-              }
-            },
-            CoOwners: guild.CoOwners.map((coOwner) => {
-              return {
-                ...coOwner,
-                Roles: coOwner.Roles.map((r) => r.Id),
-                User: {
-                  ...coOwner.User,
-                  PublicFlags: Number(FlagFields.RemovePrivateFlags(BigInt(coOwner.User.PublicFlags as number))),
-                }
-              };
-            }),
-          };
-        }),
-        Settings: {
-          Theme: UserSettingsDecrypted.Theme,
-          Language: UserSettingsDecrypted.Language,
-          Privacy: UserSettingsDecrypted.Privacy,
+              },
+              CoOwners: guild.CoOwners.map((coOwner) => {
+                return {
+                  ...coOwner,
+                  Roles: coOwner.Roles.map((role) => role.Id),
+                  User: {
+                    ...coOwner.User,
+                    PublicFlags: Number(FlagFields.RemovePrivateFlags(BigInt(coOwner.User.PublicFlags as number))),
+                  },
+                };
+              }),
+            };
+          }),
+          Settings: {
+            Theme: UserSettingsDecrypted.Theme,
+            Language: UserSettingsDecrypted.Language,
+            Privacy: UserSettingsDecrypted.Privacy,
+          },
+          Mentions: UserSettingsDecrypted.Mentions,
+          SessionId: user.Id,
+          HeartbeatInterval: user.HeartbeatInterval,
         },
-        Mentions: UserSettingsDecrypted.Mentions,
-        SessionId: user.id,
-        HeartbeatInterval: user.heartbeatInterval
       },
-    }, false);
+      false,
+    );
   }
 }

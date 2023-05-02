@@ -9,7 +9,7 @@
  * GPL 3.0 Licensed
  */
 
-import { Ws } from '@kastelll/packages'
+import { EventsHandler } from '@kastelll/core';
 import { DeleteChannel } from '../Events/System/Channels/DeleteChannel';
 import { NewChannel } from '../Events/System/Channels/NewChannel';
 import { UpdateChannel } from '../Events/System/Channels/UpdateChannel';
@@ -21,6 +21,7 @@ import { MemberUpdate } from '../Events/System/Guilds/MemberUpdate';
 import { NewGuild } from '../Events/System/Guilds/NewGuild';
 import { RemoveFromGuild } from '../Events/System/Guilds/RemoveFromGuild';
 import { UpdateGuild } from '../Events/System/Guilds/UpdateGuild';
+import { HeartBeat as HeartbeatSystem } from '../Events/System/HeartBeat';
 import { DeleteInvite } from '../Events/System/Invites/DeleteInvite';
 import { NewInvite } from '../Events/System/Invites/NewInvite';
 import { PurgeInvites } from '../Events/System/Invites/PurgeInvites';
@@ -30,7 +31,6 @@ import { PurgeMessages } from '../Events/System/Messages/PurgeMessages';
 import { UpdateMessages } from '../Events/System/Messages/UpdateMessage';
 import { DeleteRole } from '../Events/System/Roles/DeleteRole';
 import { NewRole } from '../Events/System/Roles/NewRole';
-import { HeartBeat as HeartbeatSystem } from '../Events/System/HeartBeat';
 import { UpdateRole } from '../Events/System/Roles/UpdateRole';
 import { HeartBeat } from '../Events/V1/Heartbeat';
 import { Identify } from '../Events/V1/Identify';
@@ -38,43 +38,43 @@ import { Resume } from '../Events/V1/Resume';
 
 // Below are all the events we import
 // example: import Heartbeat from './client/heartbeat'
-// then we add it to the EventsHandler class 
+// then we add it to the EventsHandler class
 // new Heartbeat()
 
 export default class Init {
-    constructor() {}
+  public constructor() {}
 
-    public create() {
-      return new Ws.EventsHandler(
-        // System Below
-        new DeleteChannel(),
-        new NewChannel(),
-        new UpdateChannel(),
-        new DeleteGuild(),
-        new MemberAdd(),
-        new MemberBan(),
-        new MemberLeave(),
-        new MemberUpdate(),
-        new NewGuild(),
-        new RemoveFromGuild(),
-        new UpdateGuild(),
-        new DeleteInvite(),
-        new NewInvite(),
-        new PurgeInvites(),
-        new DeleteMessage(),
-        new NewMessage(),
-        new PurgeMessages(),
-        new UpdateMessages(),
-        new DeleteRole(),
-        new NewRole(),
-        new UpdateRole(),
-        new HeartbeatSystem(),
-        // System Ends Here
-        // V1 Below
-        new Identify(),
-        new HeartBeat(),
-        new Resume(),
-        // V1 Ends Here
-      )
-    }
+  public create() {
+    return new EventsHandler(
+      // System Below
+      new DeleteChannel(),
+      new NewChannel(),
+      new UpdateChannel(),
+      new DeleteGuild(),
+      new MemberAdd(),
+      new MemberBan(),
+      new MemberLeave(),
+      new MemberUpdate(),
+      new NewGuild(),
+      new RemoveFromGuild(),
+      new UpdateGuild(),
+      new DeleteInvite(),
+      new NewInvite(),
+      new PurgeInvites(),
+      new DeleteMessage(),
+      new NewMessage(),
+      new PurgeMessages(),
+      new UpdateMessages(),
+      new DeleteRole(),
+      new NewRole(),
+      new UpdateRole(),
+      new HeartbeatSystem(),
+      // System Ends Here
+      // V1 Below
+      new Identify(),
+      new HeartBeat(),
+      new Resume(),
+      // V1 Ends Here
+    );
+  }
 }

@@ -1,18 +1,18 @@
 export interface RawSettings {
-    _id: string;
-    User: string;
-    Presence: number;
-    Tokens: string[];
-    Theme: string;
-    Language: string;
-    Privacy: number;
-    Mentions: string[];
-    __v: number;
+  Language: string;
+  Mentions: string[];
+  Presence: number;
+  Privacy: number;
+  Theme: string;
+  Tokens: string[];
+  User: string;
+  __v: number;
+  _id: string;
 }
 
 interface IRawSettingsWJ {
-    toJSON(): RawSettings;
-    toObject(): RawSettings;
+  toJSON(): RawSettings;
+  toObject(): RawSettings;
 }
 
-export type Settings = RawSettings & IRawSettingsWJ;
+export type Settings = IRawSettingsWJ & RawSettings;

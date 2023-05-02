@@ -1,34 +1,29 @@
-import { Events, User } from '@kastelll/packages/dist/Ws';
-import { WsUtils } from '../../../Utils/Classes/WsUtils';
+import type { User } from '@kastelll/core';
+import { Events, AuthCodes } from '@kastelll/core';
+import { SystemOpCodes, OpCodes } from '../../../Utils/Classes/WsUtils.js';
 // import WSS from '../../../index';
 
 // This is Sent from the API to the System, then System sends it to the Client
 export class UpdateGuild extends Events {
-  constructor() {
+  public constructor() {
     super();
 
-    this.authRequired = true;
+    this.AuthRequired = true;
 
-    this.name = 'UpdateGuild';
+    this.Name = 'UpdateGuild';
 
-    this.op = WsUtils.OpCodes.GuildUpdate;
+    this.Op = OpCodes.GuildUpdate;
 
-    this.strictCheck = true;
+    this.StrictCheck = true;
 
-    this.version = 0;
+    this.Version = 0;
 
-    this.allowedAuthTypes = WsUtils.AUTH_CODES.SYSTEM;
+    this.AllowedAuthTypes = AuthCodes.System;
   }
 
-  override async execute(
-    user: User,
-    data: {
-
-    },
-  ) {
-
+  public override async Execute(user: User, data: {}) {
     user.send({
-        op: WsUtils.SystemOpCodes.UpdateGuildAck
-    })
+      op: SystemOpCodes.UpdateGuildAck,
+    });
   }
 }

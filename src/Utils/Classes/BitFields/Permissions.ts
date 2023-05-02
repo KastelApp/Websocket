@@ -9,63 +9,64 @@
  * GPL 3.0 Licensed
  */
 
-import { Permissions as Perms } from '../../../Constants'
+import { Permissions as Perms } from '../../../Constants';
 
 class Permissions {
-    bits: bigint
-    constructor(bits: number) {
-        this.bits = BigInt(bits)
-    }
+  bits: bigint;
 
-    has(bit: bigint) {
-        return (this.bits & bit) === bit
-    }
+  constructor(bits: number) {
+    this.bits = BigInt(bits);
+  }
 
-    add(bit: bigint): this {
-        if (this.has(bit)) return this
-        this.bits |= bit
-        return this
-    }
+  has(bit: bigint) {
+    return (this.bits & bit) === bit;
+  }
 
-    remove(bit: bigint): this {
-        if (!this.has(bit)) return this
-        this.bits ^= bit
-        return this
-    }
+  add(bit: bigint): this {
+    if (this.has(bit)) return this;
+    this.bits |= bit;
+    return this;
+  }
 
-    serialize(): bigint {
-        return this.bits
-    }
+  remove(bit: bigint): this {
+    if (!this.has(bit)) return this;
+    this.bits ^= bit;
+    return this;
+  }
 
-    toJSON(): Record<keyof typeof Perms, boolean> {
-        return Object.keys(Perms).reduce((obj, key) => {
-            obj[key as keyof typeof Perms] = this.has(Perms[key as keyof typeof Perms])
-            return obj
-        }, {} as Record<keyof typeof Perms, boolean>)
-    }
+  serialize(): bigint {
+    return this.bits;
+  }
 
-    toArray(): string[] {
-        return Object.keys(Perms).reduce((arr, key) => {
-            if (this.has(Perms[key as keyof typeof Perms])) arr.push(key)
-            return arr
-        }, [] as string[])
-    }
+  toJSON(): Record<keyof typeof Perms, boolean> {
+    return Object.keys(Perms).reduce<Record<keyof typeof Perms, boolean>>((obj, key) => {
+      obj[key as keyof typeof Perms] = this.has(Perms[key as keyof typeof Perms]);
+      return obj;
+    }, {});
+  }
 
-    hasString(bit: keyof typeof Perms) {
-        return this.has(Perms[bit as keyof typeof Perms])
-    }
+  toArray(): string[] {
+    return Object.keys(Perms).reduce<string[]>((arr, key) => {
+      if (this.has(Perms[key as keyof typeof Perms])) arr.push(key);
+      return arr;
+    }, []);
+  }
 
-    static deserialize(bits: bigint): Permissions {
-        return new Permissions(Number(bits))
-    }
+  hasString(bit: keyof typeof Perms) {
+    return this.has(Perms[bit as keyof typeof Perms]);
+  }
 
-    static get FlagFields(): typeof Perms {
-        return Perms
-    }
+  static deserialize(bits: bigint): Permissions {
+    return new Permissions(Number(bits));
+  }
 
-    static get FlagFieldsArray(): (keyof typeof Perms)[] {
-        return Object.keys(Perms) as (keyof typeof Perms)[]
-    }
+  static get FlagFields(): typeof Perms {
+    return Perms;
+  }
+
+  static get FlagFieldsArray(): (keyof typeof Perms)[] {
+    return Object.keys(Perms) as (keyof typeof Perms)[];
+  }
 }
 
 export default Permissions;
