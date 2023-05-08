@@ -5,14 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node dist/index.js",
-    "tsupb": "tsup",
-    "build": "turbo tsupb",
-    "lint:affected:development": "turbo run lint --filter='...[origin/development]' --parallel",
-    "format:affected:development": "turbo run format --filter='...[origin/development]' --parallel",
-    "lint:affected:stable": "turbo run lint --filter='...[origin/stable]' --parallel",
-    "format:affected:stable": "turbo run format --filter='...[origin/stable]' --parallel",
-    "build:affected:development": "turbo run tsupb --filter='...[origin/development]' --parallel",
-    "build:affected:stable": "turbo run tsupb --filter='...[origin/stable]' --parallel",
+    "build": "tsup",
     "lint": "prettier --check . && cross-env TIMING=1 eslint src --ext .js,.ts --format=pretty",
     "format": "prettier --write . && cross-env TIMING=1 eslint src --ext .js,.ts --fix --format=pretty"
   },
@@ -30,7 +23,7 @@
   "packageManager": "yarn@3.3.0",
   "dependencies": {
     "@kastelll/core": "^0.2.4",
-    "@kastelll/util": "0.1.6-beta.5",
+    "@kastelll/util": "0.2.0",
     "@sentry/node": "^7.49.0",
     "chalk": "^4.1.2",
     "express": "^4.18.2",

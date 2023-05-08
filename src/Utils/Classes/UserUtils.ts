@@ -12,14 +12,14 @@
 // TODO: Add more stuff to this class
 
 import type { User } from '@kastelll/core';
-import Constants, { RelationshipFlags } from '../../Constants';
+import Constants, { RelationshipFlags } from '../../Constants.js';
 import type { GuildPermissions } from '../../Types/Guilds/User';
 import type { PopulatedUserWJ } from '../../Types/User/User';
-import schemaData from '../SchemaData';
-import { FriendSchema, UserSchema } from '../Schemas/Schemas';
-import GuildMemberFlags from './BitFields/GuildMember';
-import Permissions from './BitFields/Permissions';
-import Encryption from './Encryption';
+import schemaData from '../SchemaData.js';
+import { FriendSchema, UserSchema } from '../Schemas/Schemas.js';
+import GuildMemberFlags from './BitFields/GuildMember.js';
+import Permissions from './BitFields/Permissions.js';
+import Encryption from './Encryption.js';
 
 // Description: This class is used to store user data, and to flush it to the database
 // Its main purpose is for setting when someone fails a request, we then flush it to the rate limiter database
@@ -29,17 +29,17 @@ import Encryption from './Encryption';
 // when it will be used in development, but it will be used in the future (hopefully)
 
 class UserUtils {
-  Token: string;
+  public Token: string;
 
-  user: User;
+  public user: User;
 
-  constructor(Token: string, user: User) {
+  public constructor(Token: string, user: User) {
     this.Token = Token;
 
     this.user = user;
   }
 
-  async fetchFriends(FilterBlocked = false) {
+  public async fetchFriends(FilterBlocked = false) {
     const FriendsR = await FriendSchema.find({
       Receiver: Encryption.encrypt(this.user.UserData.Id as string),
     });
@@ -98,14 +98,14 @@ class UserUtils {
   }
 
   // This is for Guilds not DM channels
-  async canSendMessagesGuildV(ChannelId: string): Promise<boolean> {
+  public async canSendMessagesGuildV(ChannelId: string): Promise<boolean> {
     const Guilds = await this.getGuilds();
 
-    const Guild = Guilds.find((g) => g.Channels.find((c) => c._id === ChannelId));
+    const Guild = Guilds.find((gld) => gld.Channels.find((chan) => chan._id === ChannelId));
 
     if (!Guild) return false;
 
-    const GuildMember = Guild.Members.find((m) => m.User._id === this.user.UserData.Id);
+    const GuildMember = Guild.Members.find((mem) => mem.User._id === this.user.UserData.Id);
 
     if (!GuildMember) return false;
 
@@ -116,12 +116,12 @@ class UserUtils {
     if (MemberFlags.hasString('Owner') || MemberFlags.hasString('CoOwner')) return true;
 
     // Soon we will check for PermissionOverides
-    const Channel = Guild.Channels.find((c) => c._id === ChannelId);
+    const Channel = Guild.Channels.find((chan) => chan._id === ChannelId);
 
     if (!Channel) return false;
 
-    const OneRoleHasPermission = GuildMember.Roles.some((r) => {
-      const Role = Guild.Roles.find((gr) => gr._id === r);
+    const OneRoleHasPermission = GuildMember.Roles.some((rle) => {
+      const Role = Guild.Roles.find((gr) => gr._id === rle);
 
       if (!Role) return false;
 
@@ -130,20 +130,18 @@ class UserUtils {
       return RolePermissions.hasString('SendMessages');
     });
 
-    if (OneRoleHasPermission) return true;
-
-    return false;
+    return OneRoleHasPermission ?? false;
   }
 
-  async canSendMessagesArray(ChannelId: string[]) {
+  public async canSendMessagesArray(ChannelId: string[]) {
     const FetchedGuilds = await this.getGuilds();
 
-    const Guilds = FetchedGuilds.filter((g) => g.Channels.find((c) => ChannelId.includes(c._id)));
+    const Guilds = FetchedGuilds.filter((gld) => gld.Channels.find((chan) => ChannelId.includes(chan._id)));
 
     const GuildsData: { CanSend: boolean; GuildId: string }[] = [];
 
     for (const Guild of Guilds) {
-      const GuildMember = Guild.Members.find((m) => m.User._id === this.user.UserData.Id);
+      const GuildMember = Guild.Members.find((mem) => mem.User._id === this.user.UserData.Id);
 
       if (!GuildMember) continue;
 
@@ -157,12 +155,12 @@ class UserUtils {
       }
 
       // Soon we will check for PermissionOverides
-      const Channels = Guild.Channels.filter((c) => ChannelId.includes(c._id));
+      const Channels = Guild.Channels.filter((chan) => ChannelId.includes(chan._id));
 
       if (!Channels.length) continue;
 
-      const OneRoleHasPermission = GuildMember.Roles.some((r) => {
-        const Role = Guild.Roles.find((gr) => gr._id === r);
+      const OneRoleHasPermission = GuildMember.Roles.some((rle) => {
+        const Role = Guild.Roles.find((gr) => gr._id === rle);
 
         if (!Role) return false;
 
@@ -177,7 +175,7 @@ class UserUtils {
     return GuildsData;
   }
 
-  async CanSendMessagesInChannels(ChannelId: string[]) {
+  public async CanSendMessagesInChannels(ChannelId: string[]) {
     const ChannelData: {
       CanSend: boolean;
       ChannelId: string;
@@ -186,14 +184,14 @@ class UserUtils {
     const Guilds = await this.getGuilds();
 
     for (const Channel of ChannelId) {
-      const Guild = Guilds.find((g) => g.Channels.find((c) => c._id === Channel));
+      const Guild = Guilds.find((gld) => gld.Channels.find((chan) => chan._id === Channel));
 
       if (!Guild) {
         ChannelData.push({ ChannelId: Channel, CanSend: false });
         continue;
       }
 
-      const GuildMember = Guild.Members.find((m) => m.User._id === this.user.UserData.Id);
+      const GuildMember = Guild.Members.find((mem) => mem.User._id === this.user.UserData.Id);
 
       if (!GuildMember) {
         ChannelData.push({ ChannelId: Channel, CanSend: false });
@@ -213,15 +211,15 @@ class UserUtils {
       }
 
       // Soon we will check for PermissionOverides
-      const ChannelData2 = Guild.Channels.find((c) => c._id === Channel);
+      const ChannelData2 = Guild.Channels.find((chan) => chan._id === Channel);
 
       if (!ChannelData2) {
         ChannelData.push({ ChannelId: Channel, CanSend: false });
         continue;
       }
 
-      const OneRoleHasPermission = GuildMember.Roles.some((r) => {
-        const Role = Guild.Roles.find((gr) => gr._id === r);
+      const OneRoleHasPermission = GuildMember.Roles.some((rle) => {
+        const Role = Guild.Roles.find((gr) => gr._id === rle);
 
         if (!Role) return false;
 
@@ -236,10 +234,10 @@ class UserUtils {
     return ChannelData;
   }
 
-  async ChannelsCanSendMessagesIn(ChannelTypeCheck: boolean = false) {
+  public async ChannelsCanSendMessagesIn(ChannelTypeCheck: boolean = false) {
     const Guidls = await this.getGuilds();
 
-    const Channels = Guidls.flatMap((g) => g.Channels);
+    const Channels = Guidls.flatMap((gld) => gld.Channels);
 
     const ChannelData: {
       CanSend: boolean;
@@ -247,14 +245,14 @@ class UserUtils {
     }[] = [];
 
     for (const Channel of Channels) {
-      const Guild = Guidls.find((g) => g.Channels.find((c) => c._id === Channel._id));
+      const Guild = Guidls.find((gld) => gld.Channels.find((chan) => chan._id === Channel._id));
 
       if (!Guild) {
         ChannelData.push({ ChannelId: Channel._id, CanSend: false });
         continue;
       }
 
-      const GuildMember = Guild.Members.find((m) => m.User._id === this.user.UserData.Id);
+      const GuildMember = Guild.Members.find((mem) => mem.User._id === this.user.UserData.Id);
 
       if (!GuildMember) {
         ChannelData.push({ ChannelId: Channel._id, CanSend: false });
@@ -269,7 +267,7 @@ class UserUtils {
       }
 
       // Soon we will check for PermissionOverides
-      const ChannelData2 = Guild.Channels.find((c) => c._id === Channel._id);
+      const ChannelData2 = Guild.Channels.find((chan) => chan._id === Channel._id);
 
       if (!ChannelData2) {
         ChannelData.push({ ChannelId: Channel._id, CanSend: false });
@@ -288,8 +286,8 @@ class UserUtils {
         continue;
       }
 
-      const OneRoleHasPermission = GuildMember.Roles.some((r) => {
-        const Role = Guild.Roles.find((gr) => gr._id === r);
+      const OneRoleHasPermission = GuildMember.Roles.some((rle) => {
+        const Role = Guild.Roles.find((gr) => gr._id === rle);
 
         if (!Role) return false;
 
@@ -304,7 +302,7 @@ class UserUtils {
     return ChannelData;
   }
 
-  async getGuilds(): Promise<GuildPermissions[]> {
+  public async getGuilds(): Promise<GuildPermissions[]> {
     const UserSchemad = await UserSchema.findById(Encryption.encrypt(this.user.UserData.Id as string));
 
     if (!UserSchemad) return [];
@@ -318,28 +316,28 @@ class UserUtils {
     return Encryption.completeDecryption(UserSchemad.toObject().Guilds);
   }
 
-  async getMember(GuildId: string, UserId: string) {
+  public async getMember(GuildId: string, UserId: string) {
     const Guild = await this.getGuilds();
 
-    const GuildData = Guild.find((g) => g._id === GuildId);
+    const GuildData = Guild.find((gld) => gld._id === GuildId);
 
     if (!GuildData) return null;
 
-    const Member = GuildData.Members.find((m) => m.User._id === UserId);
+    const Member = GuildData.Members.find((mem) => mem.User._id === UserId);
 
     if (!Member) return null;
 
     return Member;
   }
 
-  async getMemberFromChannel(ChannelId: string, UserId: string) {
+  public async getMemberFromChannel(ChannelId: string, UserId: string) {
     const Guild = await this.getGuilds();
 
-    const GuildData = Guild.find((g) => g.Channels.find((c) => c._id === ChannelId));
+    const GuildData = Guild.find((gld) => gld.Channels.find((chan) => chan._id === ChannelId));
 
     if (!GuildData) return null;
 
-    const Member = GuildData.Members.find((m) => m.User._id === UserId);
+    const Member = GuildData.Members.find((mem) => mem.User._id === UserId);
 
     if (!Member) return null;
 
@@ -349,4 +347,4 @@ class UserUtils {
 
 export default UserUtils;
 
-export { UserUtils as User };
+export { UserUtils };

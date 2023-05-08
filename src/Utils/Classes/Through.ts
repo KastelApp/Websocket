@@ -1,3 +1,4 @@
+/* eslint-disable n/no-sync */
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -11,17 +12,17 @@ const Through = {
 
     if (fileInfo.isDirectory()) {
       const files = fs.readdirSync(filePath);
-      for (let i = 0; i < files.length; i++) {
-        const fi = fs.statSync(path.join(filePath, files[i as number] as string));
+      for (let key = 0; key < files.length; key++) {
+        const fi = fs.statSync(path.join(filePath, files[key as number] as string));
 
         if (fi.isDirectory()) {
-          Through.thr(path.join(filePath, files[i as number] as string), dirArray);
+          Through.thr(path.join(filePath, files[key as number] as string), dirArray);
         } else {
-          if (!allowedEndings.includes(path.extname(path.join(filePath, files[i as number] as string)))) {
+          if (!allowedEndings.includes(path.extname(path.join(filePath, files[key as number] as string)))) {
             continue;
           }
 
-          dirArray.push(path.join(filePath, files[i as number] as string));
+          dirArray.push(path.join(filePath, files[key as number] as string));
         }
       }
     } else {
@@ -41,6 +42,7 @@ const Through = {
 
   loadFiles(pathsArray: string[]) {
     for (const file of pathsArray) {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       require(file);
     }
   },

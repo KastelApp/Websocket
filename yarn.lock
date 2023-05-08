@@ -756,13 +756,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@kastelll/util@npm:0.1.6-beta.5":
-  version: 0.1.6-beta.5
-  resolution: "@kastelll/util@npm:0.1.6-beta.5"
+"@kastelll/util@npm:0.2.0":
+  version: 0.2.0
+  resolution: "@kastelll/util@npm:0.2.0"
   dependencies:
     "@kastelll/internal": latest
     ioredis: ^5.3.2
-  checksum: a4f4c78d886ceeb3768f9a8fbcb65f0754219809b432716369f0470aa0d80ed7e937d7f2c0d6898713fb276b4c10643438dce5b0d311ea5e2262f4b5ce5b5522
+    undici: ^5.22.0
+  checksum: 0d5a9a8ad2775327b9c585e48de939800729e747f0cbc9fe5c32afd76fba37ef157171b9279405c98dbfe3c7c7e3efaef22c9eb4f8cf971b2d716ae1a59d64bd
   languageName: node
   linkType: hard
 
@@ -1889,6 +1890,15 @@ __metadata:
   peerDependencies:
     esbuild: ">=0.17"
   checksum: 737217e37b72d7bee431b5d839b86ba604430f3ec346f073071de2ce65f0915189d4394ddd4685e0366b2930f38c95742b58c7101b8c53d9a8381d453f0b3b8a
+  languageName: node
+  linkType: hard
+
+"busboy@npm:^1.6.0":
+  version: 1.6.0
+  resolution: "busboy@npm:1.6.0"
+  dependencies:
+    streamsearch: ^1.1.0
+  checksum: 32801e2c0164e12106bf236291a00795c3c4e4b709ae02132883fe8478ba2ae23743b11c5735a0aae8afe65ac4b6ca4568b91f0d9fed1fdbc32ede824a73746e
   languageName: node
   linkType: hard
 
@@ -6650,6 +6660,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"streamsearch@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "streamsearch@npm:1.1.0"
+  checksum: 1cce16cea8405d7a233d32ca5e00a00169cc0e19fbc02aa839959985f267335d435c07f96e5e0edd0eadc6d39c98d5435fb5bbbdefc62c41834eadc5622ad942
+  languageName: node
+  linkType: hard
+
 "string-argv@npm:^0.3.1":
   version: 0.3.1
   resolution: "string-argv@npm:0.3.1"
@@ -7267,6 +7284,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"undici@npm:^5.22.0":
+  version: 5.22.0
+  resolution: "undici@npm:5.22.0"
+  dependencies:
+    busboy: ^1.6.0
+  checksum: 8dc55240a60ae7680798df344e8f46ad0f872ed0fa434fb94cc4fd2b5b2f8053bdf11994d15902999d3880f9bf7cd875a2e90883d2702bf0f366dacd9cbf3fc6
+  languageName: node
+  linkType: hard
+
 "unique-filename@npm:^2.0.0":
   version: 2.0.1
   resolution: "unique-filename@npm:2.0.1"
@@ -7515,7 +7541,7 @@ __metadata:
     "@commitlint/cli": ^17.6.1
     "@commitlint/config-angular": ^17.6.1
     "@kastelll/core": ^0.2.4
-    "@kastelll/util": 0.1.6-beta.5
+    "@kastelll/util": 0.2.0
     "@sentry/node": ^7.49.0
     "@types/bcrypt": ^5.0.0
     "@types/express": ^4.17.17

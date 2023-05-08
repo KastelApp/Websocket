@@ -9,62 +9,63 @@
  * GPL 3.0 Licensed
  */
 
-import { GuildMemberFlags as GMF } from '../../../Constants';
+import { GuildMemberFlags as GMF } from '../../../Constants.js';
 
 class GuildMemberFlags {
-  bits: number;
+  public bits: number;
 
-  constructor(bits: number) {
+  public constructor(bits: number) {
     this.bits = bits;
   }
 
-  has(bit: number) {
+  public has(bit: number) {
     return (this.bits & bit) === bit;
   }
 
-  add(bit: number): this {
+  public add(bit: number): this {
     if (this.has(bit)) return this;
     this.bits |= bit;
     return this;
   }
 
-  remove(bit: number): this {
+  public remove(bit: number): this {
     if (!this.has(bit)) return this;
     this.bits ^= bit;
     return this;
   }
 
-  serialize(): number {
+  public serialize(): number {
     return this.bits;
   }
 
-  toJSON(): Record<keyof typeof GMF, boolean> {
+  public toJSON(): Record<keyof typeof GMF, boolean> {
     return Object.keys(GMF).reduce<Record<keyof typeof GMF, boolean>>((obj, key) => {
       obj[key as keyof typeof GMF] = this.has(GMF[key as keyof typeof GMF]);
       return obj;
-    }, {});
+    // eslint-disable-next-line @typescript-eslint/prefer-reduce-type-parameter
+    }, {} as Record<keyof typeof GMF, boolean>);
   }
 
-  toArray(): string[] {
+  public toArray(): string[] {
     return Object.keys(GMF).reduce<string[]>((arr, key) => {
       if (this.has(GMF[key as keyof typeof GMF])) arr.push(key);
       return arr;
     }, []);
   }
 
-  hasString(bit: keyof typeof GMF) {
+  public hasString(bit: keyof typeof GMF) {
     return this.has(GMF[bit as keyof typeof GMF]);
   }
 
-  static deserialize(bits: number): GuildMemberFlags {
+  public static deserialize(bits: number): GuildMemberFlags {
     return new GuildMemberFlags(Number(bits));
   }
 
-  static get FlagFields(): typeof GMF {
+  public static get FlagFields(): typeof GMF {
     return GMF;
   }
 
-  static get FlagFieldsArray(): (keyof typeof GMF)[] {
+  public static get FlagFieldsArray(): (keyof typeof GMF)[] {
     return Object.keys(GMF) as (keyof typeof GMF)[];
   }
 }

@@ -1,4 +1,4 @@
-import Constants from '../../Constants';
+import Constants from '../../Constants.js';
 
 const StringValidation = {
   isString(value: any): boolean {

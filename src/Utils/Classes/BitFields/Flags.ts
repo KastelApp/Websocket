@@ -42,7 +42,8 @@ class FlagFields {
     return Object.keys(Flags).reduce<Record<keyof typeof Flags, boolean>>((obj, key) => {
       obj[key as keyof typeof Flags] = this.has(Flags[key as keyof typeof Flags]);
       return obj;
-    }, {});
+    // eslint-disable-next-line @typescript-eslint/prefer-reduce-type-parameter
+    }, {} as Record<keyof typeof Flags, boolean>);
   }
 
   public toArray(): string[] {
