@@ -42,39 +42,39 @@ import { Resume } from '../Events/V1/Resume';
 // new Heartbeat()
 
 export default class Init {
-  public constructor() {}
+	public constructor() {}
 
-  public create() {
-    return new EventsHandler(
-      // System Below
-      new DeleteChannel(),
-      new NewChannel(),
-      new UpdateChannel(),
-      new DeleteGuild(),
-      new MemberAdd(),
-      new MemberBan(),
-      new MemberLeave(),
-      new MemberUpdate(),
-      new NewGuild(),
-      new RemoveFromGuild(),
-      new UpdateGuild(),
-      new DeleteInvite(),
-      new NewInvite(),
-      new PurgeInvites(),
-      new DeleteMessage(),
-      new NewMessage(),
-      new PurgeMessages(),
-      new UpdateMessages(),
-      new DeleteRole(),
-      new NewRole(),
-      new UpdateRole(),
-      new HeartbeatSystem(),
-      // System Ends Here
-      // V1 Below
-      new Identify(),
-      new HeartBeat(),
-      new Resume(),
-      // V1 Ends Here
-    );
-  }
+	public create() {
+		return new EventsHandler(
+			// System Below
+			new DeleteChannel(),
+			new NewChannel(),
+			new UpdateChannel(),
+			new DeleteGuild(),
+			new MemberAdd(),
+			new MemberBan(),
+			new MemberLeave(),
+			new MemberUpdate(),
+			new NewGuild(),
+			new RemoveFromGuild(),
+			new UpdateGuild(),
+			new DeleteInvite(),
+			new NewInvite(),
+			new PurgeInvites(),
+			new DeleteMessage(),
+			new NewMessage(),
+			new PurgeMessages(),
+			new UpdateMessages(),
+			new DeleteRole(),
+			new NewRole(),
+			new UpdateRole(),
+			new HeartbeatSystem(),
+			// System Ends Here
+			// V1 Below
+			new Identify(),
+			new HeartBeat(),
+			new Resume(),
+			// V1 Ends Here
+		);
+	}
 }

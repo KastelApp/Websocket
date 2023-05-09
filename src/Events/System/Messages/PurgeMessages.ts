@@ -5,25 +5,25 @@ import { SystemOpCodes, OpCodes } from '../../../Utils/Classes/WsUtils.js';
 
 // This is Sent from the API to the System, then System sends it to the Client
 export class PurgeMessages extends Events {
-  public constructor() {
-    super();
+	public constructor() {
+		super();
 
-    this.AuthRequired = true;
+		this.AuthRequired = true;
 
-    this.Name = 'DeleteMessage';
+		this.Name = 'DeleteMessage';
 
-    this.Op = OpCodes.PurgeMessages;
+		this.Op = OpCodes.PurgeMessages;
 
-    this.StrictCheck = true;
+		this.StrictCheck = true;
 
-    this.Version = 0;
+		this.Version = 0;
 
-    this.AllowedAuthTypes = AuthCodes.System;
-  }
+		this.AllowedAuthTypes = AuthCodes.System;
+	}
 
-  public override async Execute(user: User, data: {}) {
-    user.send({
-      op: SystemOpCodes.PurgeMessagesAck,
-    });
-  }
+	public override async Execute(user: User, data: {}) {
+		user.send({
+			op: SystemOpCodes.PurgeMessagesAck,
+		});
+	}
 }
