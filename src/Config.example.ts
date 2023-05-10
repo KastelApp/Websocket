@@ -1,5 +1,11 @@
-import { Config, MongoDB, Redis } from './Types/Config';
-import type { Encryption as En, Regexes as Rg, WebsocketConfig } from './Types/Config';
+import type {
+	Encryption as En,
+	Regexes as RegexsConfigType,
+	WebsocketConfig,
+	Config as ConfigType,
+	MongoDB as MongoDBConfigType,
+	Redis as RedisConfigType,
+} from './Types/Config';
 
 const Server: WebsocketConfig = {
 	AllowedIps: [],
@@ -8,24 +14,24 @@ const Server: WebsocketConfig = {
 	MaxConnections: Number.MAX_SAFE_INTEGER,
 	SystemLoginInfo: {
 		AllowNonLocalIp: false,
-		Password: '',
-		LocalIps: [],
+		Password: '123',
+		LocalIps: ['::1', '::ffff:127.0.0.1', 'localhost'],
 		ForceHeartbeats: true, // This makes it where the system has to send a heartbeat in a random time (just like clients)
 	},
 };
 
-const Redis: Redis = {
+const Redis: RedisConfigType = {
 	Host: '',
-	Port: '',
-	User: '',
+	Port: 6_379,
+	Username: '',
 	Password: '',
-	Db: '',
+	DB: 0,
 };
 
-const MongoDB: MongoDB = {
-	User: '',
+const MongoDB: MongoDBConfigType = {
+	User: 'dev',
 	Host: '',
-	Port: '',
+	Port: '80',
 	Password: '',
 	Database: '',
 	AuthSource: '',
@@ -33,29 +39,28 @@ const MongoDB: MongoDB = {
 };
 
 const Encryption: En = {
-	Algorithm: '',
+	Algorithm: 'aes-256-cbc',
 	InitVector: '',
 	SecurityKey: '',
 	JwtKey: '',
 };
 
-const Regexes: Rg = {
+const Regexs: RegexsConfigType = {
 	// Source: https://regexr.com/2rhq7
-	email: new RegExp(
-		/[\d!#$%&'*+/=?^_`a-z{|}~-]+(?:\.[\d!#$%&'*+/=?^_`a-z{|}~-]+)*@(?:[\da-z](?:[\da-z-]*[\da-z])?\.)+[\da-z](?:[\da-z-]*[\da-z])?/,
-	),
+	Email:
+		/[\d!#$%&'*+/=?^_`a-z{|}~-]+(?:\.[\d!#$%&'*+/=?^_`a-z{|}~-]+)*@(?:[\da-z](?:[\da-z-]*[\da-z])?\.)+[\da-z](?:[\da-z-]*[\da-z])?/g,
 	// Source: https://regexr.com/3bfsi
-	password: new RegExp(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[A-Za-z]).{8,}$/),
+	Password: /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[A-Za-z]).{8,72}$/g,
 };
 
-const Config: Config = {
+const Config: ConfigType = {
 	Encryption,
 	MongoDB,
 	Redis,
-	Regexes,
+	Regexs,
 	Server,
 };
 
 export default Config;
 
-export { Config, Encryption, MongoDB, Redis, Regexes, Server };
+export { Config, Encryption, MongoDB, Redis, Regexs, Server };

@@ -9,8 +9,6 @@
  * GPL 3.0 Licensed
  */
 
-// TODO: Add more stuff to this class
-
 import type { User } from '@kastelll/core';
 import Constants, { RelationshipFlags } from '../../Constants.js';
 import type { GuildPermissions } from '../../Types/Guilds/User';
@@ -20,13 +18,6 @@ import { FriendSchema, UserSchema } from '../Schemas/Schemas.js';
 import GuildMemberFlags from './BitFields/GuildMember.js';
 import Permissions from './BitFields/Permissions.js';
 import Encryption from './Encryption.js';
-
-// Description: This class is used to store user data, and to flush it to the database
-// Its main purpose is for setting when someone fails a request, we then flush it to the rate limiter database
-// this way our rate limiter can be dynamic and not just a static number
-// failed_requests % 5 === 0 ? failed_requests / 5 : failed_requests % 5 (Example formula)
-// Do note this is in a very early stage, and is not fully implemented yet, Stuff will be added over time but we are unsure
-// when it will be used in development, but it will be used in the future (hopefully)
 
 class UserUtils {
 	public Token: string;
