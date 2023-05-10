@@ -25,11 +25,9 @@
 		"eslint": "^8.40.0",
 		"eslint-config-neon": "^0.1.47",
 		"eslint-formatter-pretty": "^5.0.0",
-		"husky": "^8.0.3",
 		"lint-staged": "^13.2.2",
 		"prettier": "^2.8.8",
-		"tsup": "^6.7.0",
-		"turbo": "^1.9.3"
+		"tsup": "^6.7.0"
 	},
 	"scripts": {
 		"start": "node dist/index.js",
