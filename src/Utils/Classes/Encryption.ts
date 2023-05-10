@@ -10,248 +10,197 @@
  */
 
 import crypto from 'node:crypto';
-import { Encryption as En } from '../../Config';
+import { Encryption as En } from '../../Config.js';
 
 const algorithm = En.Algorithm;
 const initVector = En.InitVector;
 const securityKey = En.SecurityKey;
 
-const Encryption = {
-  /**
-   * Encrypt Data
-   *
-   * @param {string} data The String to encrypt
-   * @returns {string} The encrypted string
-   */
-  encrypt(data: string): string {
-    try {
-      const cipher = crypto.createCipheriv(algorithm, securityKey, initVector);
+class Encryption {
+	public static encrypt(data: string): string {
+		try {
+			const cipher = crypto.createCipheriv(algorithm, securityKey, initVector);
 
-      const dd = {
-        data,
-      };
+			const dd = {
+				data,
+			};
 
-      return cipher.update(Encryption.fixData(dd), 'utf-8', 'hex') + cipher.final('hex');
-    } catch (error) {
-      throw new Error(`Failed to encrypt\n${error}`);
-    }
-  },
+			return cipher.update(Encryption.fixData(dd), 'utf8', 'hex') + cipher.final('hex');
+		} catch (error) {
+			throw new Error(`Failed to encrypt\n${error}`);
+		}
+	}
 
-  /**
-   * Decrypt data
-   *
-   * @param {string} data
-   * @returns {*} the decrypted data
-   */
-  decrypt(data: string, raw = false): any {
-    try {
-      const decipher = crypto.createDecipheriv(algorithm, securityKey, initVector);
-      const decrypted = decipher.update(data, 'hex', 'utf-8') + decipher.final('utf8');
-      const cleaned = Encryption.cleanData(decrypted);
+	public static decrypt(data: string, raw = false): any {
+		try {
+			const decipher = crypto.createDecipheriv(algorithm, securityKey, initVector);
+			const decrypted = decipher.update(data, 'hex', 'utf8') + decipher.final('utf8');
+			const cleaned = Encryption.cleanData(decrypted);
 
-      if (raw) return cleaned;
+			if (raw) return cleaned;
 
-      return cleaned.data;
-    } catch (error: any) {
-      throw new Error(`Failed to decrypt (${error.message})`);
-    }
-  },
+			return cleaned.data;
+		} catch (error: any) {
+			throw new Error(`Failed to decrypt (${error.message})`);
+		}
+	}
 
-  /**
-   * Checks if a string is encrypted or not
-   *
-   * @param {string} item
-   * @returns {boolean} If the string is encrypted or not
-   */
-  isEncrypted(item: string): boolean {
-    try {
-      Encryption.decrypt(item);
+	public static isEncrypted(item: string): boolean {
+		try {
+			Encryption.decrypt(item);
 
-      return true;
-    } catch {
-      return false;
-    }
-  },
+			return true;
+		} catch {
+			return false;
+		}
+	}
 
-  /**
-   * @private
-   */
-  fixData(data: any): string {
-    if (typeof data === 'object') data = JSON.stringify(data);
+	private static fixData(data: any): string {
+		let fixedData = data;
 
-    if (typeof data === 'undefined') data = '';
+		if (typeof fixedData === 'object') fixedData = JSON.stringify(data);
 
-    if (typeof data !== 'string') data = String(data);
+		if (typeof fixedData === 'undefined') fixedData = '';
 
-    if (typeof data !== 'string') throw new Error(`Failed to stringify data ${typeof data}, ${data}`);
+		if (typeof fixedData !== 'string') fixedData = String(data);
 
-    return data;
-  },
+		if (typeof fixedData !== 'string') throw new Error(`Failed to stringify data ${typeof fixedData}, ${fixedData}`);
 
-  /**
-   * @private
-   */
-  cleanData(data: string): any {
-    try {
-      return JSON.parse(data);
-    } catch {
-      return data;
-    }
-  },
+		return fixedData;
+	}
 
-  /**
-   * @param {*} items
-   * @return {items}
-   */
-  completeDecryption(items: any, raw = false): any {
-    const decrypt = (item: string) => Encryption.decrypt(item, raw);
-    const completeDecrypt = (item: string) => Encryption.completeDecryption(item, raw);
-    const isEncrypted = Encryption.isEncrypted;
+	private static cleanData(data: string): any {
+		try {
+			return JSON.parse(data);
+		} catch {
+			return data;
+		}
+	}
 
-    if (typeof items === 'undefined') {
-      return null;
-    }
+	public static completeDecryption(items: any, raw = false): any {
+		const decrypt = (item: string) => Encryption.decrypt(item, raw);
+		const completeDecrypt = (item: any) => Encryption.completeDecryption(item, raw);
+		const isEncrypted = Encryption.isEncrypted;
 
-    if (typeof items === 'string') {
-      return decrypt(items);
-    }
+		if (typeof items === 'object') {
+			if (Array.isArray(items)) {
+				const NewArray: any[] = [];
 
-    if (Array.isArray(items)) {
-      const newArray: any[] = [];
+				for (const item of items) {
+					if (!item || item === null) {
+						NewArray.push(item);
 
-      for (const item of items) {
-        if (
-          item == true ||
-          item == false ||
-          item == null ||
-          typeof item === 'number' ||
-          (typeof item === 'object' ? item instanceof Date : false)
-        ) {
-          newArray.push(item);
-          continue;
-        }
+						continue;
+					}
 
-        if (typeof item === 'object') {
-          newArray.push(completeDecrypt(item));
-        } else if (isEncrypted(item)) {
-          newArray.push(completeDecrypt(item));
-        } else {
-          newArray.push(item);
-        }
-      }
+					if (typeof item === 'object') {
+						NewArray.push(completeDecrypt(item));
+					} else if (item instanceof Date) {
+						NewArray.push(item);
+					} else if (typeof item === 'string' && isEncrypted(item)) {
+						NewArray.push(decrypt(item));
+					} else {
+						NewArray.push(item);
+					}
+				}
 
-      return newArray;
-    } else if (typeof items === 'object' && !Array.isArray(items)) {
-      const newObject: {
-        [key: string]: any;
-      } = {};
+				console.log(NewArray);
 
-      for (const i in items) {
-        const item = items[i];
+				return NewArray;
+			} else {
+				const NewObject: any = {};
 
-        if (
-          item == true ||
-          item == false ||
-          item == null ||
-          typeof item === 'number' ||
-          (typeof item === 'object' ? item instanceof Date : false)
-        ) {
-          newObject[i] = item;
-          continue;
-        }
+				for (const [key, item] of Object.entries(items)) {
+					if (!item || item === null) {
+						NewObject[key] = item;
 
-        const encrypted = isEncrypted(item);
+						continue;
+					}
 
-        if (typeof item === 'object') {
-          newObject[i] = completeDecrypt(item);
-        } else if (encrypted) {
-          newObject[i] = completeDecrypt(item);
-        } else {
-          newObject[i] = item;
-        }
-      }
+					if (typeof item === 'object') {
+						NewObject[key] = completeDecrypt(item);
+					} else if (item instanceof Date) {
+						NewObject[key] = item;
+					} else if (typeof item === 'string' && isEncrypted(item)) {
+						NewObject[key] = decrypt(item);
+					} else {
+						NewObject[key] = item;
+					}
+				}
 
-      return newObject;
-    }
-  },
+				console.log(NewObject);
 
-  /**
-   * @param {*} items
-   * @return {items}
-   */
-  completeEncryption(items: any): any {
-    const encrypt = Encryption.encrypt;
-    const completeEncrypt = Encryption.completeEncryption;
-    const isEncrypted = Encryption.isEncrypted;
+				return NewObject;
+			}
+		} else if (typeof items === 'string' && isEncrypted(items)) {
+			return decrypt(items);
+		} else {
+			return items;
+		}
+	}
 
-    if (typeof items === 'undefined') {
-      return null;
-    }
+	public static completeEncryption(items: any): any {
+		const encrypt = Encryption.encrypt;
+		const completeEncrypt = Encryption.completeEncryption;
+		const isEncrypted = Encryption.isEncrypted;
 
-    if (typeof items === 'string') {
-      return encrypt(items);
-    }
+		if (typeof items === 'object') {
+			if (Array.isArray(items)) {
+				const NewArray: any[] = [];
 
-    if (items instanceof Date) {
-      const numberedDate = items.getTime();
-      return encrypt(String(numberedDate));
-    }
+				for (const item of items) {
+					if (!item || item === null) {
+						NewArray.push(item);
 
-    if (Array.isArray(items)) {
-      const newArray: any[] = [];
+						continue;
+					}
 
-      for (const item of items) {
-        if (
-          item == true ||
-          item == false ||
-          item == null ||
-          typeof item === 'number' ||
-          (typeof item === 'object' ? item instanceof Date : false)
-        ) {
-          newArray.push(item);
-          continue;
-        }
+					if (typeof item === 'object') {
+						NewArray.push(completeEncrypt(item));
+					} else if (item instanceof Date) {
+						NewArray.push(item);
+					} else if (typeof item === 'string' && !isEncrypted(item)) {
+						NewArray.push(encrypt(item));
+					} else {
+						NewArray.push(item);
+					}
+				}
 
-        if (!isEncrypted(item)) {
-          newArray.push(completeEncrypt(item));
-        } else {
-          newArray.push(completeEncrypt(item));
-        }
-      }
+				console.log(NewArray);
 
-      return newArray;
-    } else if (typeof items === 'object' && !Array.isArray(items)) {
-      const newObject: {
-        [key: string]: any;
-      } = {};
+				return NewArray;
+			} else {
+				const NewObject: any = {};
 
-      for (const i in items) {
-        const item = items[i];
+				for (const [key, item] of Object.entries(items)) {
+					if (!item || item === null) {
+						NewObject[key] = item;
 
-        const encrypted = isEncrypted(item);
+						continue;
+					}
 
-        if (!encrypted) {
-          if (
-            item == true ||
-            item == false ||
-            item == null ||
-            typeof item === 'number' ||
-            (typeof item === 'object' ? item instanceof Date : false)
-          ) {
-            newObject[i] = item;
-            continue;
-          } else {
-            newObject[i] = completeEncrypt(item);
-          }
-        } else {
-          newObject[i] = completeEncrypt(item);
-        }
-      }
+					if (typeof item === 'object') {
+						NewObject[key] = completeEncrypt(item);
+					} else if (item instanceof Date) {
+						NewObject[key] = item;
+					} else if (typeof item === 'string' && !isEncrypted(item)) {
+						NewObject[key] = encrypt(item);
+					} else {
+						NewObject[key] = item;
+					}
+				}
 
-      return newObject;
-    }
-  },
-};
+				console.log(NewObject);
+
+				return NewObject;
+			}
+		} else if (typeof items === 'string' && !isEncrypted(items)) {
+			return encrypt(items);
+		} else {
+			return items;
+		}
+	}
+}
 
 export default Encryption;
 

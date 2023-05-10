@@ -5,77 +5,77 @@ import Config from '../Config.js';
 import WSS from '../index.js';
 
 const SendToUsersInGuild = (guildId: string, ignoreUserIds: string[], data: any) => {
-  for (const user of WSS.connectedUsers.values()) {
-    if (
-      user.AuthType === AuthCodes.User &&
-      user?.UserData?.Guilds?.includes(guildId) &&
-      !ignoreUserIds.includes(user.Id)
-    ) {
-      user.send(data);
-    }
-  }
+	for (const user of WSS.connectedUsers.values()) {
+		if (
+			user.AuthType === AuthCodes.User &&
+			user?.UserData?.Guilds?.includes(guildId) &&
+			!ignoreUserIds.includes(user.Id)
+		) {
+			user.send(data);
+		}
+	}
 };
 
 WSS.SendToUsersInGuild = SendToUsersInGuild;
 
 WSS.on('connection', (user) => {
-  console.log(`[Stats] New connection from ${user.Ip}`);
+	console.log(`[Stats] New connection from ${user.Ip}`);
 
-  if (user.AuthType === AuthCodes.System) {
-    if (Config.Server.SystemLoginInfo.AllowNonLocalIp && !Config.Server.SystemLoginInfo.LocalIps.includes(user.Ip)) {
-      user.close(4_000, 'System login is not allowed from non local ip', false);
+	if (user.AuthType === AuthCodes.System) {
+		if (Config.Server.SystemLoginInfo.AllowNonLocalIp && !Config.Server.SystemLoginInfo.LocalIps.includes(user.Ip)) {
+			user.close(4_000, 'System login is not allowed from non local ip', false);
 
-      return;
-    }
+			return;
+		}
 
-    if (user.SocketVersion !== 0) {
-      user.close(4_000, 'Invalid socket version', false);
+		if (user.SocketVersion !== 0) {
+			user.close(4_000, 'Invalid socket version', false);
 
-      return;
-    }
+			return;
+		}
 
-    const Params = user.Params as {
-      c: string;
-      // Password
-      encoding: string;
-      p: string;
-      v: string;
-    };
+		const Params = user.Params as {
+			c: string;
+			// Password
+			encoding: string;
+			p: string;
+			v: string;
+		};
 
-    if (!Params) {
-      user.close(4_000, 'Invalid parameters', false);
+		if (!Params) {
+			user.close(4_000, 'Invalid parameters', false);
 
-      return;
-    }
+			return;
+		}
 
-    if (!crypto.timingSafeEqual(Buffer.from(Params.p), Buffer.from(Config.Server.SystemLoginInfo.Password))) {
-      user.close(4_000, 'Invalid parameters', false);
+		if (!crypto.timingSafeEqual(Buffer.from(Params.p), Buffer.from(Config.Server.SystemLoginInfo.Password))) {
+			user.close(4_000, 'Invalid parameters', false);
 
-      return;
-    }
+			return;
+		}
 
-    user.setAuthed(true);
+		user.setAuthed(true);
 
-    if (Params.c === 'true') {
-      user.setCompression(true);
-    }
+		if (Params.c === 'true') {
+			user.setCompression(true);
+		}
 
-    if (Config.Server.SystemLoginInfo.ForceHeartbeats) {
-      user.setHeartbeatInterval(WsUtils.GenerateHeartbeatInterval());
-      user.setLastHeartbeat(Date.now());
-    }
+		if (Config.Server.SystemLoginInfo.ForceHeartbeats) {
+			user.setHeartbeatInterval(WsUtils.GenerateHeartbeatInterval());
+			user.setLastHeartbeat(Date.now());
+		}
 
-    user.send({
-      Authed: true,
-      ApproximateMembers: Math.ceil(
-        Array.from(WSS.connectedUsers.values()).filter((user) => user.AuthType === AuthCodes.User).length / 2,
-      ),
-      Misc: {
-        HeartbeatInterval: user.HeartbeatInterval ?? null,
-        SessionId: user.Id,
-      },
-    });
-  } else if (user.SocketVersion === 0) {
-    user.close(4_000, 'Invalid socket version', false);
-  }
+		user.send({
+			Authed: true,
+			ApproximateMembers: Math.ceil(
+				Array.from(WSS.connectedUsers.values()).filter((user) => user.AuthType === AuthCodes.User).length / 2,
+			),
+			Misc: {
+				HeartbeatInterval: user.HeartbeatInterval ?? null,
+				SessionId: user.Id,
+			},
+		});
+	} else if (user.SocketVersion === 0) {
+		user.close(4_000, 'Invalid socket version', false);
+	}
 });
