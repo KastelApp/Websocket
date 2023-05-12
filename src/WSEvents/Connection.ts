@@ -2,6 +2,7 @@ import { Buffer } from 'node:buffer';
 import crypto from 'node:crypto';
 import { AuthCodes, WsUtils } from '@kastelll/core';
 import Config from '../Config.js';
+import { OpCodes } from '../Utils/Classes/WsUtils.js';
 import WSS from '../index.js';
 
 const SendToUsersInGuild = (guildId: string, ignoreUserIds: string[], data: any) => {
@@ -20,7 +21,14 @@ WSS.SendToUsersInGuild = SendToUsersInGuild;
 
 WSS.on('connection', (user) => {
 	console.log(`[Stats] New connection from ${user.Ip}`);
-
+	
+	user.send({
+		op: OpCodes.Hello,
+		d: {
+			Date: Date.now(),
+		}
+	})
+	
 	if (user.AuthType === AuthCodes.System) {
 		if (Config.Server.SystemLoginInfo.AllowNonLocalIp && !Config.Server.SystemLoginInfo.LocalIps.includes(user.Ip)) {
 			user.close(4_000, 'System login is not allowed from non local ip', false);

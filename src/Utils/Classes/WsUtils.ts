@@ -1,4 +1,5 @@
 const OpCodes = {
+	Hello: 0, // This is the first thing you get when you connect (just so you know we know you exist)
 	Auth: 1, // You send this to Identify yourself
 	Authed: 2, // This gets sent to you when you are authenticated
 	HeartBeat: 3, // This is a heartbeat to keep the connection alive (you send this)

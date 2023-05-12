@@ -29,7 +29,7 @@ console.log(
 ██║  ██╗██║  ██║███████║   ██║   ███████╗███████╗
 ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝   ╚═╝   ╚══════╝╚══════╝
 A Chatting Application
-Running version ${Relative.Version ? `v${Relative.Version}` : 'Unknown version'} of Kastel's Backend. Node.js version ${
+Running version ${Relative.Version ? `v${Relative.Version}` : 'Unknown version'} of Kastel's Websocket. Node.js version ${
 		process.version
 	}
 If you would like to support this project please consider donating to https://opencollective.com/kastel\n`),

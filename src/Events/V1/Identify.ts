@@ -98,9 +98,10 @@ export class Identify extends Events {
 
 		const UsersSettings = await SettingSchema.findOne({
 			User: Encryption.encrypt(TokenData.Snowflake),
+			'Tokens.Token': Encryption.encrypt(data.Token),
 		});
 
-		if (!UsersSettings?.Tokens?.includes(Encryption.encrypt(data.Token))) {
+		if (!UsersSettings) {
 			// user.close(WsUtils.HARD_CLOSE_CODES.AUTHENTICATION_FAILED, 'Invalid token', false);
 
 			user.close(HardCloseCodes.AuthenticationFailed, 'Invalid token', false);
@@ -158,12 +159,6 @@ export class Identify extends Events {
 		const Flags = new FlagFields(UserSettingsDecrypted.User.Flags);
 
 		if (Flags.hasString('WaitingOnDisableDataUpdate') || Flags.hasString('WaitingOnAccountDeletion')) {
-			// user.close(
-			//   WsUtils.HARD_CLOSE_CODES.AUTHENTICATION_FAILED,
-			//   'Your account is currently being deleted or it is disabled.',
-			//   false,
-			// );
-
 			user.close(
 				HardCloseCodes.AuthenticationFailed,
 				'Your account is currently being deleted or it is disabled.',
@@ -174,8 +169,6 @@ export class Identify extends Events {
 		}
 
 		if (UserSettingsDecrypted.User.Banned || UserSettingsDecrypted.User.Locked) {
-			// user.close(WsUtils.HARD_CLOSE_CODES.AUTHENTICATION_FAILED, 'Your account is currently locked or banned.', false);
-
 			user.close(HardCloseCodes.AuthenticationFailed, 'Your account is currently locked or banned.', false);
 
 			return;
@@ -226,7 +219,6 @@ export class Identify extends Events {
 
 		const Utils = new UserUtils(data.Token, user);
 
-		// eslint-disable-next-line require-atomic-updates -- Check back later
 		user.UserData.AllowedChannels = (await Utils.ChannelsCanSendMessagesIn(true))
 			.filter((chan) => chan.CanSend)
 			.map((chan) => chan.ChannelId);
@@ -240,7 +232,6 @@ export class Identify extends Events {
 		user.send(
 			{
 				op: OpCodes.Authed,
-				// eslint-disable-next-line id-length
 				d: {
 					User: NormalData,
 					Guilds: Guilds.map((guild) => {
@@ -262,7 +253,11 @@ export class Identify extends Events {
 							Owner: {
 								...guild.Owner,
 								// we do this as we just want the role ids not the populated roles
-								Roles: guild.Owner.Roles.map((role) => role.Id),
+								Roles: guild.Owner.Roles.map((role) => {
+									console.log(role);
+									
+									return role.Id
+								}),
 								User: {
 									...guild.Owner.User,
 									PublicFlags: Number(FlagFields.RemovePrivateFlags(BigInt(guild.Owner.User.PublicFlags as number))),
