@@ -8,6 +8,6 @@ declare module '@kastelll/core' {
 	}
 
 	interface WebsocketServer {
-		SendToUsersInGuild(guildId: string, ignore: string[], data: any);
+		SendToUsersInGuild(guildId: string, ignore: string[], data: any): void;
 	}
 }
