@@ -3,8 +3,12 @@ import { Events, AuthCodes, HardCloseCodes } from '@kastelll/core';
 import { OpCodes } from '../../Utils/Classes/WsUtils.js';
 
 export class HeartBeat extends Events {
-	public constructor() {
+	public Websocket: Websocket;
+
+	public constructor(wss: Websocket) {
 		super();
+
+		this.Websocket = wss;
 
 		this.AuthRequired = true;
 

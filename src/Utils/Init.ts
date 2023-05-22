@@ -35,6 +35,7 @@ import { UpdateRole } from '../Events/System/Roles/UpdateRole.js';
 import { HeartBeat } from '../Events/V1/Heartbeat.js';
 import { Identify } from '../Events/V1/Identify.js';
 import { Resume } from '../Events/V1/Resume.js';
+import type Websocket from '../Websocket.js';
 
 // Below are all the events we import
 // example: import Heartbeat from './client/heartbeat'
@@ -42,42 +43,46 @@ import { Resume } from '../Events/V1/Resume.js';
 // new Heartbeat()
 
 export default class Init {
+	public wss: Websocket;
+
 	public startDate: number;
 
-	public constructor() {
+	public constructor(wss: Websocket) {
 		this.startDate = Date.now();
+
+		this.wss = wss;
 	}
 
 	public create() {
 		return new EventsHandler(
 			// System Below
-			new DeleteChannel(),
-			new NewChannel(),
-			new UpdateChannel(),
-			new DeleteGuild(),
-			new MemberAdd(),
-			new MemberBan(),
-			new MemberLeave(),
-			new MemberUpdate(),
-			new NewGuild(),
-			new RemoveFromGuild(),
-			new UpdateGuild(),
-			new DeleteInvite(),
-			new NewInvite(),
-			new PurgeInvites(),
-			new DeleteMessage(),
-			new NewMessage(),
-			new PurgeMessages(),
-			new UpdateMessages(),
-			new DeleteRole(),
-			new NewRole(),
-			new UpdateRole(),
-			new HeartbeatSystem(),
+			new DeleteChannel(this.wss),
+			new NewChannel(this.wss),
+			new UpdateChannel(this.wss),
+			new DeleteGuild(this.wss),
+			new MemberAdd(this.wss),
+			new MemberBan(this.wss),
+			new MemberLeave(this.wss),
+			new MemberUpdate(this.wss),
+			new NewGuild(this.wss),
+			new RemoveFromGuild(this.wss),
+			new UpdateGuild(this.wss),
+			new DeleteInvite(this.wss),
+			new NewInvite(this.wss),
+			new PurgeInvites(this.wss),
+			new DeleteMessage(this.wss),
+			new NewMessage(this.wss),
+			new PurgeMessages(this.wss),
+			new UpdateMessages(this.wss),
+			new DeleteRole(this.wss),
+			new NewRole(this.wss),
+			new UpdateRole(this.wss),
+			new HeartbeatSystem(this.wss),
 			// System Ends Here
 			// V1 Below
-			new Identify(),
-			new HeartBeat(),
-			new Resume(),
+			new Identify(this.wss),
+			new HeartBeat(this.wss),
+			new Resume(this.wss),
 			// V1 Ends Here
 		);
 	}

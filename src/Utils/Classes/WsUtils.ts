@@ -26,6 +26,8 @@ const OpCodes = {
 	MemberBan: 24, // This is a member being banned from a guild
 	MemberUpdate: 25, // This is a member being updated
 	Resume: 26, // This is a resume request
+	LazyRequestMembers: 27, // This is a request for members
+	LazyRequestGuild: 28, // This is a request for a guild
 };
 
 const SystemOpCodes = {

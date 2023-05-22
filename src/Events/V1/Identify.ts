@@ -10,6 +10,7 @@ import UserUtils from '../../Utils/Classes/UserUtils.js';
 import { OpCodes } from '../../Utils/Classes/WsUtils.js';
 import schemaData from '../../Utils/SchemaData.js';
 import { SettingSchema } from '../../Utils/Schemas/Schemas.js';
+import type Websocket from '../../Websocket.js';
 
 type FixedGuildMember = Omit<GuildMember, 'Roles' | 'User'> & {
 	Roles: Role[];
@@ -33,8 +34,12 @@ type UpToDateUser = RawUser & {
 };
 
 export class Identify extends Events {
-	public constructor() {
+	public Websocket: Websocket;
+
+	public constructor(wss: Websocket) {
 		super();
+
+		this.Websocket = wss;
 
 		this.AuthRequired = false;
 
@@ -77,8 +82,6 @@ export class Identify extends Events {
 		const ValidateToken = Token.ValidateToken(data.Token);
 
 		if (!ValidateToken) {
-			// user.close(WsUtils.HARD_CLOSE_CODES.AUTHENTICATION_FAILED, 'Invalid token', false);
-
 			user.close(HardCloseCodes.AuthenticationFailed, 'Invalid token', false);
 
 			return;
@@ -89,7 +92,6 @@ export class Identify extends Events {
 		if (!TokenData) {
 			// This should never happen, Since ValidateToken is true and
 			// the only way for it to be true is if it was decoded successfully (and some other checks)
-			// user.close(WsUtils.HARD_CLOSE_CODES.UNKNOWN_ERROR, 'Unknown error', false);
 
 			user.close(HardCloseCodes.UnknownError, 'Unknown error', false);
 
@@ -102,8 +104,6 @@ export class Identify extends Events {
 		});
 
 		if (!UsersSettings) {
-			// user.close(WsUtils.HARD_CLOSE_CODES.AUTHENTICATION_FAILED, 'Invalid token', false);
-
 			user.close(HardCloseCodes.AuthenticationFailed, 'Invalid token', false);
 
 			return;
@@ -227,8 +227,6 @@ export class Identify extends Events {
 
 		user.setLastHeartbeat(Date.now());
 
-		console.log(user.UserData);
-
 		user.send(
 			{
 				op: OpCodes.Authed,
@@ -253,11 +251,7 @@ export class Identify extends Events {
 							Owner: {
 								...guild.Owner,
 								// we do this as we just want the role ids not the populated roles
-								Roles: guild.Owner.Roles.map((role) => {
-									console.log(role);
-									
-									return role.Id
-								}),
+								Roles: guild.Owner.Roles.map((role) => role.Id),
 								User: {
 									...guild.Owner.User,
 									PublicFlags: Number(FlagFields.RemovePrivateFlags(BigInt(guild.Owner.User.PublicFlags as number))),

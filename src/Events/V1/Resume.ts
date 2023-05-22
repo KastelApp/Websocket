@@ -1,10 +1,14 @@
-import type { User } from '@kastelll/core';
-import { Events } from '@kastelll/core';
+import { Events, type User } from '@kastelll/core';
 import { OpCodes } from '../../Utils/Classes/WsUtils.js';
+import type Websocket from '../../Websocket.js';
 
 export class Resume extends Events {
-	public constructor() {
+	public Websocket: Websocket;
+
+	public constructor(wss: Websocket) {
 		super();
+
+		this.Websocket = wss;
 
 		this.AuthRequired = false;
 

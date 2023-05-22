@@ -1,12 +1,16 @@
 import type { User } from '@kastelll/core';
 import { Events, AuthCodes } from '@kastelll/core';
 import { SystemOpCodes, OpCodes } from '../../../Utils/Classes/WsUtils.js';
-// import WSS from '../../../index';
+import type Websocket from '../../../Websocket.js';
 
 // This is Sent from the API to the System, then System sends it to the Client
 export class PurgeMessages extends Events {
-	public constructor() {
+	public Websocket: Websocket;
+
+	public constructor(wss: Websocket) {
 		super();
+
+		this.Websocket = wss;
 
 		this.AuthRequired = true;
 
