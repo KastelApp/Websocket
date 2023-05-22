@@ -116,6 +116,17 @@ class Websocket {
 
 				return;
 			}
+			
+			const PasswordsLengths = [
+				Buffer.from(Params.p),
+				Buffer.from(Server.SystemLoginInfo.Password),
+			]
+			
+			if (PasswordsLengths?.[0]?.length !== PasswordsLengths?.[1]?.length) {
+				user.close(4_000, 'Invalid parameters', false);
+
+				return;
+			}
 
 			if (!crypto.timingSafeEqual(Buffer.from(Params.p), Buffer.from(Server.SystemLoginInfo.Password))) {
 				user.close(4_000, 'Invalid parameters', false);
