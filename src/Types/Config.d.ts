@@ -46,15 +46,10 @@ export interface MongoDB {
 	Uri: string;
 	User: string;
 }
-export interface Regexes {
-	Email: RegExp;
-	Password: RegExp;
-}
 
 export interface Config {
 	Encryption: Encryption;
 	MongoDB: MongoDB;
 	Redis: Redis;
-	Regexs: Regexes;
 	Server: WebsocketConfig;
 }

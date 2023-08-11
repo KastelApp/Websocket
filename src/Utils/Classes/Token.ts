@@ -9,30 +9,67 @@
  * GPL 3.0 Licensed
  */
 
-import Encryption from './Encryption.js';
+import { Buffer } from 'node:buffer';
+import crypto from 'node:crypto';
+import { Base64 } from '@kastelll/util';
+import { Encryption } from '../../Config.js';
 
-// NOTE: Please PLEASE do not use this vanilla token system, Please create your own token system, this is just a example
-// This is very insecure, and should not be used in production
+class Token {
+	public static GenerateToken(UserId: string): string {
+		const snowflakeBase64 = Base64.Encode(UserId);
+		const nonce = crypto
+			.randomBytes(16)
+			.toString('base64')
+			.replaceAll('+', 'F')
+			.replaceAll('/', 'q')
+			.replace(/=+$/, 'zT');
 
-const Token = {
-	GenerateToken(UserId: string): string {
-		return Encryption.encrypt(UserId);
-	},
+		const StringDated = Base64.Encode(String(Date.now()) + nonce);
 
-	ValidateToken(Token: string): boolean {
-		return Encryption.decrypt(Token);
-	},
+		const hmac = crypto.createHmac('sha256', Encryption.JwtKey);
 
-	DecodeToken(Token: string): {
+		hmac.update(`${snowflakeBase64}.${StringDated}`);
+
+		return `${snowflakeBase64}.${StringDated}.${hmac
+			.digest('base64')
+			.replaceAll('+', 'F')
+			.replaceAll('/', 'q')
+			.replace(/=+$/, 'zT')}`;
+	}
+
+	public static ValidateToken(Token: string): boolean {
+		const [snowflakeBase64, StringDated, hmacSignature] = Token.split('.');
+
+		if (!snowflakeBase64 || !StringDated || !hmacSignature) return false;
+
+		const hmac = crypto.createHmac('sha256', Encryption.JwtKey);
+
+		hmac.update(`${snowflakeBase64}.${StringDated}`);
+
+		return hmac.digest('base64').replaceAll('+', 'F').replaceAll('/', 'q').replace(/=+$/, 'zT') === hmacSignature;
+	}
+
+	public static DecodeToken(Token: string): {
 		Snowflake: string;
 		Timestamp: number;
 	} {
-		return {
-			Snowflake: Encryption.decrypt(Token),
-			Timestamp: Date.now(),
-		};
-	},
-};
+		const [snowflakeBase64, StringDated] = Token.split('.');
+
+		if (!snowflakeBase64 || !StringDated) throw new Error('Invalid token provided.');
+
+		const Snowflake = Buffer.from(
+			snowflakeBase64.replaceAll('F', '+').replaceAll('q', '/').replace(/zT/, '='),
+			'base64',
+		).toString('utf8');
+
+		const DecodedTimestamp = Buffer.from(
+			StringDated.replaceAll('F', '+').replaceAll('q', '/').replace(/zT/, '='),
+			'base64',
+		).toString('utf8');
+
+		return { Snowflake, Timestamp: Number.parseInt(DecodedTimestamp, 10) };
+	}
+}
 
 export default Token;
 

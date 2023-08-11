@@ -58,7 +58,7 @@ const schemaData = (type: keyof typeof schemaExports, data: any): any => {
 
 			if (!Found) {
 				if (value.extended) {
-					console.log('Its Extended but not found (Debug)');
+					console.warn('Its Extended but not found (Debug)');
 				} else {
 					NewObject[key] = value.default;
 				}
@@ -108,7 +108,7 @@ const schemaData = (type: keyof typeof schemaExports, data: any): any => {
 
 					if (!Found) {
 						if (value.extended) {
-							console.log('Its Extended but not found (Debug)');
+							console.warn('Its Extended but not found (Debug)');
 						} else {
 							NewObject[key] = value.default;
 						}

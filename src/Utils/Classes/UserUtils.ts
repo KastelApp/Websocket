@@ -265,8 +265,6 @@ class UserUtils {
 				continue;
 			}
 
-			console.log(ChannelData2.Type);
-
 			if (ChannelTypeCheck && ChannelData2.Type === Constants.ChannelTypes.GuildCategory) {
 				ChannelData.push({ ChannelId: Channel._id, CanSend: false });
 				continue;

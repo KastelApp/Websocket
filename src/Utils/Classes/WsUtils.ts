@@ -28,6 +28,10 @@ const OpCodes = {
 	Resume: 26, // This is a resume request
 	LazyRequestMembers: 27, // This is a request for members
 	LazyRequestGuild: 28, // This is a request for a guild
+	NewSession: 29,
+	DeleteSession: 30,
+	SelfUpdate: 31,
+	RelationshipUpdate: 32,
 };
 
 const SystemOpCodes = {
@@ -52,6 +56,10 @@ const SystemOpCodes = {
 	MemberLeaveAck: 19,
 	MemberBanAck: 20,
 	MemberUpdateAck: 21,
+	NewSessionAck: 22,
+	DeleteSessionAck: 23,
+	SelfUpdateAck: 24,
+	RelationshipUpdateAck: 25,
 };
 
 export { OpCodes, SystemOpCodes };

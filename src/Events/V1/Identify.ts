@@ -1,3 +1,4 @@
+import { inspect } from 'node:util';
 import type { User } from '@kastelll/core';
 import { Events, HardCloseCodes, WsUtils } from '@kastelll/core';
 import type { User as RawUser, Guild, Friend, GuildMember, Channel, Role, PermissionsOverides } from '../../Types/Raw';
@@ -7,10 +8,10 @@ import FlagFields from '../../Utils/Classes/BitFields/Flags.js';
 import { Encryption } from '../../Utils/Classes/Encryption.js';
 import Token from '../../Utils/Classes/Token.js';
 import UserUtils from '../../Utils/Classes/UserUtils.js';
+import type Websocket from '../../Utils/Classes/Websocket.js';
 import { OpCodes } from '../../Utils/Classes/WsUtils.js';
 import schemaData from '../../Utils/SchemaData.js';
-import { SettingSchema } from '../../Utils/Schemas/Schemas.js';
-import type Websocket from '../../Websocket.js';
+import { FriendSchema, SettingSchema, UserSchema } from '../../Utils/Schemas/Schemas.js';
 
 type FixedGuildMember = Omit<GuildMember, 'Roles' | 'User'> & {
 	Roles: Role[];
@@ -33,7 +34,7 @@ type UpToDateUser = RawUser & {
 	Guilds: FixedGuild[];
 };
 
-export class Identify extends Events {
+export default class Identify extends Events {
 	public Websocket: Websocket;
 
 	public constructor(wss: Websocket) {
@@ -55,56 +56,71 @@ export class Identify extends Events {
 	public override async Execute(
 		user: User,
 		data: {
-			Settings: {
+			settings: {
 				// idk what else currently
-				Compress: boolean; // Whether the client supports compression
-				Intents?: number; // The intents the client has (WIP)
+				compress: boolean; // Whether the client supports compression
+				intents?: number; // The intents the client has (WIP)
 			};
-			Token: string;
+			token: string;
 		},
 	) {
 		if (user.Authed) {
-			user.close(HardCloseCodes.AlreadyAuthenticated, 'Already authed', false);
+			this.Websocket.Logger.debug(`User ${user.Id} tried to auth again`);
+
+			user.Close(HardCloseCodes.AlreadyAuthenticated, 'Already authed', false);
 
 			return;
 		}
 
-		if (data?.Settings?.Compress) {
+		if (data?.settings?.compress) {
 			user.setCompression(true);
 		}
 
-		if (!data.Token) {
-			user.close(HardCloseCodes.AuthenticationFailed, 'Invalid token', false);
+		if (!data.token) {
+			this.Websocket.Logger.debug(`User ${user.Id} tried to login without a token`);
+
+			user.Close(HardCloseCodes.AuthenticationFailed, 'Invalid token', false);
 
 			return;
 		}
 
-		const ValidateToken = Token.ValidateToken(data.Token);
+		const ValidateToken = Token.ValidateToken(data.token);
 
 		if (!ValidateToken) {
-			user.close(HardCloseCodes.AuthenticationFailed, 'Invalid token', false);
+			this.Websocket.Logger.debug(`User ${user.Id} tried to login with an invalid token`);
+
+			user.Close(HardCloseCodes.AuthenticationFailed, 'Invalid token', false);
 
 			return;
 		}
 
-		const TokenData = Token.DecodeToken(data.Token);
+		const TokenData = Token.DecodeToken(data.token);
 
 		if (!TokenData) {
 			// This should never happen, Since ValidateToken is true and
 			// the only way for it to be true is if it was decoded successfully (and some other checks)
+			this.Websocket.Logger.debug(
+				`User ${user.Id} tried to login and it passed ValidateToken but for some reason could not be decoded ${inspect(
+					data.token,
+				)}`,
+			);
 
-			user.close(HardCloseCodes.UnknownError, 'Unknown error', false);
+			user.Close(HardCloseCodes.UnknownError, 'Unknown error', false);
 
 			return;
 		}
 
+		this.Websocket.Logger.startTimer('Identify');
+
 		const UsersSettings = await SettingSchema.findOne({
 			User: Encryption.encrypt(TokenData.Snowflake),
-			'Tokens.Token': Encryption.encrypt(data.Token),
+			'Tokens.Token': Encryption.encrypt(data.token),
 		});
 
 		if (!UsersSettings) {
-			user.close(HardCloseCodes.AuthenticationFailed, 'Invalid token', false);
+			this.Websocket.Logger.debug(`User ${user.Id} tried to login with an invalid token (not in db)`);
+
+			user.Close(HardCloseCodes.AuthenticationFailed, 'Invalid token', false);
 
 			return;
 		}
@@ -149,6 +165,8 @@ export class Identify extends Events {
 			'User.Guilds.Members.User',
 		]);
 
+		this.Websocket.Logger.stopTimer('Identify');
+
 		const UserSettingsDecrypted = Encryption.completeDecryption({
 			...UsersSettings.toObject(),
 			_id: undefined,
@@ -159,7 +177,7 @@ export class Identify extends Events {
 		const Flags = new FlagFields(UserSettingsDecrypted.User.Flags);
 
 		if (Flags.hasString('WaitingOnDisableDataUpdate') || Flags.hasString('WaitingOnAccountDeletion')) {
-			user.close(
+			user.Close(
 				HardCloseCodes.AuthenticationFailed,
 				'Your account is currently being deleted or it is disabled.',
 				false,
@@ -169,7 +187,7 @@ export class Identify extends Events {
 		}
 
 		if (UserSettingsDecrypted.User.Banned || UserSettingsDecrypted.User.Locked) {
-			user.close(HardCloseCodes.AuthenticationFailed, 'Your account is currently locked or banned.', false);
+			user.Close(HardCloseCodes.AuthenticationFailed, 'Your account is currently locked or banned.', false);
 
 			return;
 		}
@@ -217,7 +235,7 @@ export class Identify extends Events {
 			Guilds: Guilds.map((guild) => guild.Id),
 		};
 
-		const Utils = new UserUtils(data.Token, user);
+		const Utils = new UserUtils(data.token, user);
 
 		user.UserData.AllowedChannels = (await Utils.ChannelsCanSendMessagesIn(true))
 			.filter((chan) => chan.CanSend)
@@ -227,7 +245,7 @@ export class Identify extends Events {
 
 		user.setLastHeartbeat(Date.now());
 
-		user.send(
+		user.Send(
 			{
 				op: OpCodes.Authed,
 				d: {

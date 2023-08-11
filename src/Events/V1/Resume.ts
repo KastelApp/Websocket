@@ -1,8 +1,8 @@
 import { Events, type User } from '@kastelll/core';
+import type Websocket from '../../Utils/Classes/Websocket.js';
 import { OpCodes } from '../../Utils/Classes/WsUtils.js';
-import type Websocket from '../../Websocket.js';
 
-export class Resume extends Events {
+export default class Resume extends Events {
 	public Websocket: Websocket;
 
 	public constructor(wss: Websocket) {
@@ -24,8 +24,8 @@ export class Resume extends Events {
 	public override async Execute(
 		user: User,
 		data: {
-			Sequence: number;
-			SessionId: string;
+			sequence: number;
+			sessionId: string;
 		},
 	) {}
 }

@@ -1,9 +1,9 @@
 import type { User } from '@kastelll/core';
 import { Events, HardCloseCodes } from '@kastelll/core';
+import type Websocket from '../../../Utils/Classes/Websocket.js';
 import { OpCodes } from '../../../Utils/Classes/WsUtils.js';
-import type Websocket from '../../../Websocket.js';
 
-export class RequestGuild extends Events {
+export default class RequestGuild extends Events {
 	public Websocket: Websocket;
 
 	public constructor(wss: Websocket) {
@@ -22,10 +22,5 @@ export class RequestGuild extends Events {
 		this.Version = 1;
 	}
 
-	public override async Execute(
-		user: User,
-		data: {
-		},
-	) {
-	}
+	public override async Execute(user: User, data: {}) {}
 }

@@ -14,7 +14,7 @@ import { Permissions as Perms, RolePermissions, ChannelPermissions, MixedPermiss
 class Permissions {
 	public bits: bigint;
 
-	public constructor(bits: number) {
+	public constructor(bits: number | string) {
 		this.bits = BigInt(bits);
 	}
 
@@ -43,7 +43,8 @@ class Permissions {
 			obj[key as keyof typeof Perms] = this.has(Perms[key as keyof typeof Perms]);
 			return obj;
 			// eslint-disable-next-line @typescript-eslint/prefer-reduce-type-parameter -- I got no other ideas how to fix this
-		}, {} as Record<keyof typeof Perms, boolean>);
+			// @ts-expect-error -- not sure how to fix this :/
+		}, {});
 	}
 
 	public toArray(): string[] {

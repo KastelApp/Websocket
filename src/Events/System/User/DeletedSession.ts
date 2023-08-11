@@ -4,7 +4,7 @@ import type Websocket from '../../../Utils/Classes/Websocket.js';
 import { SystemOpCodes, OpCodes } from '../../../Utils/Classes/WsUtils.js';
 
 // This is Sent from the API to the System, then System sends it to the Client
-export default class SelfUpdate extends Events {
+export default class DeleteSession extends Events {
 	public Websocket: Websocket;
 
 	public constructor(wss: Websocket) {
@@ -14,9 +14,9 @@ export default class SelfUpdate extends Events {
 
 		this.AuthRequired = true;
 
-		this.Name = 'SelfUpdate';
+		this.Name = 'DeleteSession';
 
-		this.Op = OpCodes.SelfUpdate;
+		this.Op = OpCodes.DeleteSession;
 
 		this.StrictCheck = true;
 
@@ -25,27 +25,9 @@ export default class SelfUpdate extends Events {
 		this.AllowedAuthTypes = AuthCodes.System;
 	}
 
-	public override async Execute(
-		user: User,
-		data: {
-			Avatar: string;
-			Bio?: string;
-			Email: string;
-			EmailVerified: boolean;
-			GlobalNickname: string;
-			Id: string;
-			PhoneNumber: null;
-			PublicFlags: number;
-			Tag: string;
-			TwoFaEnabled: boolean;
-			TwoFaVerified: boolean;
-			Username: string;
-		},
-	) {
-		this.Websocket.Logger.debug('yummy data', data);
-
+	public override async Execute(user: User, data: {}) {
 		user.Send({
-			op: SystemOpCodes.SelfUpdateAck,
+			op: SystemOpCodes.DeleteSessionAck,
 		});
 	}
 }

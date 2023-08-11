@@ -9,9 +9,9 @@
  * GPL 3.0 Licensed
  */
 
-import { GuildMemberFlags as GMF } from '../../../Constants.js';
+import { VerificationFlags } from '../../../Constants.js';
 
-class GuildMemberFlags {
+class VerifyFields {
 	public bits: number;
 
 	public constructor(bits: number | string) {
@@ -39,8 +39,8 @@ class GuildMemberFlags {
 	}
 
 	public toJSON() {
-		return Object.keys(GMF).reduce<Record<keyof typeof GMF, boolean>>((obj, key) => {
-			obj[key as keyof typeof GMF] = this.has(GMF[key as keyof typeof GMF]);
+		return Object.keys(VerificationFlags).reduce<Record<keyof typeof VerificationFlags, boolean>>((obj, key) => {
+			obj[key as keyof typeof VerificationFlags] = this.has(VerificationFlags[key as keyof typeof VerificationFlags]);
 			return obj;
 			// eslint-disable-next-line @typescript-eslint/prefer-reduce-type-parameter -- I got no other ideas how to fix this
 			// @ts-expect-error -- not sure how to fix this :/
@@ -48,29 +48,29 @@ class GuildMemberFlags {
 	}
 
 	public toArray(): string[] {
-		return Object.keys(GMF).reduce<string[]>((arr, key) => {
-			if (this.has(GMF[key as keyof typeof GMF])) arr.push(key);
+		return Object.keys(VerificationFlags).reduce<string[]>((arr, key) => {
+			if (this.has(VerificationFlags[key as keyof typeof VerificationFlags])) arr.push(key);
 			return arr;
 		}, []);
 	}
 
-	public hasString(bit: keyof typeof GMF) {
-		return this.has(GMF[bit as keyof typeof GMF]);
+	public hasString(bit: keyof typeof VerificationFlags) {
+		return this.has(VerificationFlags[bit as keyof typeof VerificationFlags]);
 	}
 
-	public static deserialize(bits: number): GuildMemberFlags {
-		return new GuildMemberFlags(Number(bits));
+	public static deserialize(bits: number): VerifyFields {
+		return new VerifyFields(Number(bits));
 	}
 
-	public static get FlagFields(): typeof GMF {
-		return GMF;
+	public static get FlagFields(): typeof VerificationFlags {
+		return VerificationFlags;
 	}
 
-	public static get FlagFieldsArray(): (keyof typeof GMF)[] {
-		return Object.keys(GMF) as (keyof typeof GMF)[];
+	public static get FlagFieldsArray(): (keyof typeof VerificationFlags)[] {
+		return Object.keys(VerificationFlags) as (keyof typeof VerificationFlags)[];
 	}
 }
 
-export default GuildMemberFlags;
+export default VerifyFields;
 
-export { GuildMemberFlags };
+export { VerifyFields };
