@@ -5,3 +5,6 @@
 	path = src/Utils/SchemaTypes
 	url = https://github.com/Kastelll/Schemas.git
 	branch = schema-types
+[submodule "src/Utils/Cql"]
+	path = src/Utils/Cql
+	url = https://github.com/KastelApp/CqlTables
