@@ -4,13 +4,14 @@
 	"version": "1.0.0",
 	"main": "dist/index.js",
 	"dependencies": {
+		"@kastelll/cassandra-driver": "^4.6.13",
 		"@kastelll/core": "^0.3.0",
 		"@kastelll/util": "0.2.2",
 		"@sentry/node": "^7.61.1",
 		"archiver": "^5.3.1",
+		"copyfiles": "^2.4.1",
 		"express": "^4.18.2",
 		"jsonwebtoken": "^9.0.1",
-		"mongoose": "^7.4.2",
 		"simple-git": "^3.19.1",
 		"ws": "^8.13.0"
 	},
@@ -33,10 +34,11 @@
 	},
 	"scripts": {
 		"start": "node dist/index.js",
-		"build": "tsup",
+		"build": "tsup && yarn postbuild",
 		"lint": "prettier --check . && cross-env TIMING=1 eslint src --ext .js,.ts --format=pretty",
 		"format": "prettier --write . && cross-env TIMING=1 eslint src --ext .js,.ts --fix --format=pretty",
-		"dev": "yarn build && yarn start"
+		"dev": "yarn build && node dist/index.js --dev",
+		"postbuild": "copyfiles -u 1 \"src/Utils/Cql/Tables/*\" dist"
 	},
 	"keywords": [
 		"chatting"

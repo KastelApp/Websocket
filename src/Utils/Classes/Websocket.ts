@@ -17,12 +17,11 @@ import process from 'node:process';
 import { URL } from 'node:url';
 import { AuthCodes, WebsocketServer, type User, WsUtils, Events as EventsBuilder, EventsHandler } from '@kastelll/core';
 import { CacheManager } from '@kastelll/util';
-import mongoose from 'mongoose';
 import { type SimpleGit, simpleGit } from 'simple-git';
 import Config, { Server, Redis } from '../../Config.js';
 import Constants from '../../Constants.js';
 import ProcessArgs from '../ProcessArgs.js';
-import { uriGenerator } from '../URIGen.js';
+import Connection from './Connection.js';
 import Logger from './Logger.js';
 import SystemInfo from './SystemInfo.js';
 import { OpCodes } from './WsUtils.js';
@@ -35,6 +34,8 @@ class Websocket {
 	public wss: WebsocketServer;
 
 	public Logger: Logger = new Logger();
+
+	public Cassandra: Connection;
 
 	public Cache: CacheManager;
 
@@ -88,6 +89,8 @@ class Websocket {
 			Username: Redis.Username,
 			AllowForDangerousCommands: true,
 		});
+
+		this.Cassandra = new Connection(Config.ScyllaDB.Nodes, Config.ScyllaDB.Username, Config.ScyllaDB.Password, Config.ScyllaDB.Keyspace);
 	}
 
 	public async Start() {
@@ -105,27 +108,31 @@ class Websocket {
 			process.exit(1);
 		});
 		this.Cache.on('MissedPing', () => this.Logger.warn('Redis missed ping'));
-
-		// temporary
-		this.wss.MaxPerIp = Number.POSITIVE_INFINITY;
-		this.wss.MaxConnectionsPerMinute = Number.POSITIVE_INFINITY;
-
-		mongoose.set('strictQuery', true);
-
-		mongoose.connection.on('connected', () => this.Logger.info('Connected to MongoDB'));
-
-		mongoose.connection.on('error', (err) => {
+		this.Cassandra.on('Connected', () => this.Logger.info('Connected to ScyllaDB'));
+		this.Cassandra.on('Error', (err) => {
 			this.Logger.fatal(err);
 
 			process.exit(1);
 		});
 
-		await mongoose.connect(uriGenerator()).catch((error: any) => {
-			this.Logger.fatal(error);
-			process.exit(1);
-		});
+		// temporary
+		this.wss.MaxPerIp = Number.POSITIVE_INFINITY;
+		this.wss.MaxConnectionsPerMinute = Number.POSITIVE_INFINITY;
 
-		await this.Cache.connect();
+		await Promise.all([
+			this.Cassandra.Connect(),
+			this.Cache.connect(),
+		]);
+
+		this.Logger.info('Creating ScyllaDB Tables.. This may take a while..');
+
+		const TablesCreated = await this.Cassandra.CreateTables();
+
+		if (TablesCreated) {
+			this.Logger.info('Created ScyllaDB tables');
+		} else {
+			this.Logger.warn('whar');
+		}
 
 		const Events = await this.EventsInit();
 
@@ -136,19 +143,6 @@ class Websocket {
 		}
 
 		this.wss.CreateWs();
-	}
-
-	// for backwards compatibility on the old code
-	public SendToUsersInGuild(guildId: string, ignoreUserIds: string[], data: any) {
-		for (const user of this.wss.ConnectedUsers.values()) {
-			if (
-				user.AuthType === AuthCodes.User &&
-				user?.UserData?.Guilds?.includes(guildId) &&
-				!ignoreUserIds.includes(user.Id)
-			) {
-				user.Send(data);
-			}
-		}
 	}
 
 	private onConnection(user: User) {
@@ -176,8 +170,8 @@ class Websocket {
 
 			const Params = user.Params as {
 				c: string;
-				// Password
 				encoding: string;
+				// Password
 				p: string;
 				v: string;
 			};
@@ -318,8 +312,7 @@ class Websocket {
 			`Git Info:`,
 			`Branch: ${this.GitBranch}`,
 			`Commit: ${GithubInfo.CommitShort ?? GithubInfo.Commit}`,
-			`Status: ${
-				this.Clean ? 'Clean' : 'Dirty - You will not be given support if something breaks with a dirty instance'
+			`Status: ${this.Clean ? 'Clean' : 'Dirty - You will not be given support if something breaks with a dirty instance'
 			}`,
 			'='.repeat(40),
 			'Changed Files:',

@@ -1,13 +1,12 @@
 import type {
-	Encryption as En,
-	Regexes as RegexsConfigType,
-	WebsocketConfig,
-	Config as ConfigType,
-	MongoDB as MongoDBConfigType,
+	Config as ConfigConfigType,
+	ScyllaDB as ScyllaDBConfigType,
 	Redis as RedisConfigType,
+	Encryption as EncrpytionConfigType,
+	WebsocketConfig as WebsocketConfigType
 } from './Types/Config';
 
-const Server: WebsocketConfig = {
+const Server: WebsocketConfigType = {
 	AllowedIps: [],
 	CloseOnError: false,
 	Port: 8_080,
@@ -21,46 +20,36 @@ const Server: WebsocketConfig = {
 };
 
 const Redis: RedisConfigType = {
-	Host: '',
+	Host: 'localhost',
 	Port: 6_379,
 	Username: '',
 	Password: '',
 	DB: 0,
 };
 
-const MongoDB: MongoDBConfigType = {
-	User: 'dev',
-	Host: '',
-	Port: '80',
-	Password: '',
-	Database: '',
-	AuthSource: '',
-	Uri: '',
+const ScyllaDB: ScyllaDBConfigType = {
+	Nodes: ['localhost'],
+	Keyspace: 'kastel',
+	Username: 'kstl',
+	Password: 'utuxkgREbd6d7UiaXAZ3Ljs2h',
+	CassandraOptions: {}
 };
 
-const Encryption: En = {
-	Algorithm: 'aes-256-cbc',
+const Encryption: EncrpytionConfigType = {
+	Algorithm: '',
 	InitVector: '',
 	SecurityKey: '',
-	JwtKey: '',
+	TokenKey: '',
 };
 
-const Regexs: RegexsConfigType = {
-	// Source: https://regexr.com/2rhq7
-	Email:
-		/[\d!#$%&'*+/=?^_`a-z{|}~-]+(?:\.[\d!#$%&'*+/=?^_`a-z{|}~-]+)*@(?:[\da-z](?:[\da-z-]*[\da-z])?\.)+[\da-z](?:[\da-z-]*[\da-z])?/g,
-	// Source: https://regexr.com/3bfsi
-	Password: /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[A-Za-z]).{8,72}$/g,
-};
 
-const Config: ConfigType = {
+const Config: ConfigConfigType = {
 	Encryption,
-	MongoDB,
+	ScyllaDB,
 	Redis,
-	Regexs,
 	Server,
 };
 
 export default Config;
 
-export { Config, Encryption, MongoDB, Redis, Regexs, Server };
+export { Config, Encryption, ScyllaDB, Redis, Server };
