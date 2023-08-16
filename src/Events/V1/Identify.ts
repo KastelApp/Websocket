@@ -1,8 +1,8 @@
 import { inspect } from 'node:util';
-import type { User } from '@kastelll/core';
-import { Events, HardCloseCodes, WsUtils } from '@kastelll/core';
+import Events from '../../Utils/Classes/Events.js';
+import { OpCodes } from '../../Utils/Classes/OpCodes.js';
+import type User from '../../Utils/Classes/User.js';
 import type Websocket from '../../Utils/Classes/Websocket.js';
-import { OpCodes } from '../../Utils/Classes/WsUtils.js';
 
 export default class Identify extends Events {
 	public Websocket: Websocket;
@@ -24,14 +24,16 @@ export default class Identify extends Events {
 	}
 
 	public override async Execute(
-		user: User,
-		data: {
-			settings: {
+		User: User,
+		Data: {
+			Settings: {
 				// idk what else currently
-				compress: boolean; // Whether the client supports compression
-				intents?: number; // The intents the client has (WIP)
+				Compress: boolean; // Whether the client supports compression
+				Intents?: number; // The intents the client has (WIP) (Bot Only)
 			};
-			token: string;
+			Token: string;
 		},
-	) {}
+	) {
+		console.log(Data);
+	}
 }

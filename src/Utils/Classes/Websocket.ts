@@ -15,16 +15,21 @@ import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import process from 'node:process';
 import { URL } from 'node:url';
-import { AuthCodes, WebsocketServer, type User, WsUtils, Events as EventsBuilder, EventsHandler } from '@kastelll/core';
+// import { AuthCodes, WebsocketServer, type User, WsUtils, Events as EventsBuilder, EventsHandler } from '@kastelll/core';
 import { CacheManager } from '@kastelll/util';
 import { type SimpleGit, simpleGit } from 'simple-git';
 import Config, { Server, Redis } from '../../Config.js';
 import Constants from '../../Constants.js';
 import ProcessArgs from '../ProcessArgs.js';
 import Connection from './Connection.js';
+import { Events as EventBuilder } from './Events.js';
+import EventsHandler from './EventsHandler.js';
 import Logger from './Logger.js';
+import { OpCodes } from './OpCodes.js';
 import SystemInfo from './SystemInfo.js';
-import { OpCodes } from './WsUtils.js';
+import type User from './User.js';
+import { AuthCodes, WsUtils } from './Utils.js';
+import WebsocketServer from './WS.js';
 
 type GitType = 'Added' | 'Copied' | 'Deleted' | 'Ignored' | 'Modified' | 'None' | 'Renamed' | 'Unmerged' | 'Untracked';
 
@@ -44,7 +49,7 @@ class Websocket {
 	public Constants: typeof Constants = Constants;
 
 	public Events: {
-		default: EventsBuilder;
+		default: EventBuilder;
 		directory: string;
 		systemEvent: boolean;
 	}[] = [];
@@ -79,7 +84,7 @@ class Websocket {
 	public Args: 'debug'[] = ProcessArgs(['debug']).Valid as 'debug'[];
 
 	public constructor() {
-		this.wss = new WebsocketServer(Server.Port, Server.AllowedIps, Server.CloseOnError);
+		this.wss = new WebsocketServer(Server.Port, Server.AllowedIps, Server.CloseOnError, this.Logger);
 
 		this.Cache = new CacheManager({
 			Host: Redis.Host,
@@ -149,8 +154,8 @@ class Websocket {
 		this.Logger.debug(`New connection from ${user.Ip}`);
 
 		user.Send({
-			op: OpCodes.Hello,
-			d: {
+			Op: OpCodes.Hello,
+			D: {
 				Date: Date.now(),
 			},
 		});
@@ -246,7 +251,7 @@ class Websocket {
 
 			const EventInstance = new EventClass.default(this);
 
-			if (!(EventInstance instanceof EventsBuilder)) {
+			if (!(EventInstance instanceof EventBuilder)) {
 				this.Logger.warn(`Skipping ${Event} as it does not extend Events`);
 
 				continue;

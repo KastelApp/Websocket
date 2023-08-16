@@ -1,7 +1,8 @@
-import type { User } from '@kastelll/core';
-import { Events, AuthCodes } from '@kastelll/core';
+import Events from '../../../Utils/Classes/Events.js';
+import { SystemOpCodes, OpCodes } from '../../../Utils/Classes/OpCodes.js';
+import type User from '../../../Utils/Classes/User.js';
+import { AuthCodes } from '../../../Utils/Classes/Utils.js';
 import type Websocket from '../../../Utils/Classes/Websocket.js';
-import { SystemOpCodes, OpCodes } from '../../../Utils/Classes/WsUtils.js';
 
 // This is Sent from the API to the System, then System sends it to the Client
 export default class NewMessage extends Events {
@@ -48,20 +49,6 @@ export default class NewMessage extends Events {
 			};
 		},
 	) {
-		for (const Client of this.Websocket.wss.connectedUsers.values()) {
-			if (Client.AuthType !== AuthCodes.User) continue;
 
-			if (Client.UserData?.AllowedChannels?.includes(data.Message.ChannelId)) {
-				Client.send({
-					op: OpCodes.MessageCreate,
-					event: 'MessageCreate',
-					d: data.Message,
-				});
-			}
-		}
-
-		user.Send({
-			op: SystemOpCodes.MessageCreateAck,
-		});
 	}
 }

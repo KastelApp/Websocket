@@ -1,7 +1,8 @@
-import type { User } from '@kastelll/core';
-import { Events, AuthCodes, HardCloseCodes } from '@kastelll/core';
+import Events from '../../Utils/Classes/Events.js';
+import { OpCodes } from '../../Utils/Classes/OpCodes.js';
+import type User from '../../Utils/Classes/User';
+import { AuthCodes, HardCloseCodes } from '../../Utils/Classes/Utils.js';
 import type Websocket from '../../Utils/Classes/Websocket';
-import { OpCodes } from '../../Utils/Classes/WsUtils.js';
 
 export default class HeartBeat extends Events {
 	public Websocket: Websocket;
@@ -40,7 +41,7 @@ export default class HeartBeat extends Events {
 			return;
 		}
 
-		user.setLastHeartbeat(Date.now());
+		user.LastHeartbeat = Date.now();
 
 		user.Send(
 			{

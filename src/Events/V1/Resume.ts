@@ -1,6 +1,7 @@
-import { Events, type User } from '@kastelll/core';
+import Events from '../../Utils/Classes/Events.js';
+import { OpCodes } from '../../Utils/Classes/OpCodes.js';
+import type User from '../../Utils/Classes/User.js';
 import type Websocket from '../../Utils/Classes/Websocket.js';
-import { OpCodes } from '../../Utils/Classes/WsUtils.js';
 
 export default class Resume extends Events {
 	public Websocket: Websocket;
@@ -27,5 +28,5 @@ export default class Resume extends Events {
 			sequence: number;
 			sessionId: string;
 		},
-	) {}
+	) { }
 }

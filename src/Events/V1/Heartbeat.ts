@@ -1,7 +1,7 @@
-import type { User } from '@kastelll/core';
-import { Events, HardCloseCodes } from '@kastelll/core';
+import Events from '../../Utils/Classes/Events.js';
+import { OpCodes } from '../../Utils/Classes/OpCodes.js';
+import type User from '../../Utils/Classes/User.js';
 import type Websocket from '../../Utils/Classes/Websocket.js';
-import { OpCodes } from '../../Utils/Classes/WsUtils.js';
 
 export default class HeartBeat extends Events {
 	public Websocket: Websocket;
@@ -28,21 +28,5 @@ export default class HeartBeat extends Events {
 			sequence: number;
 		},
 	) {
-		if (user.Seq !== data.sequence) {
-			this.Websocket.Logger.debug(`Expected ${user.Seq} but got ${data.sequence}`);
-
-			user.Close(HardCloseCodes.InvalidSeq, 'Invalid sequence', false);
-
-			return;
-		}
-
-		user.setLastHeartbeat(Date.now());
-
-		user.Send(
-			{
-				op: OpCodes.HeartBeatAck,
-			},
-			false,
-		);
 	}
 }

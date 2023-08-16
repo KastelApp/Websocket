@@ -1,7 +1,8 @@
-import type { User } from '@kastelll/core';
-import { Events, AuthCodes } from '@kastelll/core';
+import Events from '../../../Utils/Classes/Events.js';
+import { SystemOpCodes, OpCodes } from '../../../Utils/Classes/OpCodes.js';
+import type User from '../../../Utils/Classes/User.js';
+import { AuthCodes } from '../../../Utils/Classes/Utils.js';
 import type Websocket from '../../../Utils/Classes/Websocket.js';
-import { SystemOpCodes, OpCodes } from '../../../Utils/Classes/WsUtils.js';
 
 interface UserData {
 	Avatar: string;
