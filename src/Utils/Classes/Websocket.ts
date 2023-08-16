@@ -151,8 +151,6 @@ class Websocket {
 	}
 
 	private onConnection(user: User) {
-		this.Logger.debug(`New connection from ${user.Ip}`);
-
 		user.Send({
 			Op: OpCodes.Hello,
 			D: {

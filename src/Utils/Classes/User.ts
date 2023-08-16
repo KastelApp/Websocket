@@ -2,7 +2,7 @@ import type { Buffer } from 'node:buffer';
 import { deprecate } from 'node:util';
 import { deflateSync } from 'node:zlib';
 import type WebSocket from 'ws';
-import Errors from './Errors.js';
+import WsError from './Errors.js';
 import { HardCloseCodes } from './Utils.js';
 
 interface EventQueue {
@@ -51,13 +51,11 @@ class User {
 
 	public Ip: string;
 
-	private ResumeDepWarning: boolean = false;
-
 	public constructor(id: string, ws: WebSocket.WebSocket, authed: boolean, ip: string) {
 		this.Id = id;
-		
+
 		this.Ws = ws;
-		
+
 		this.Authed = authed;
 
 		this.Ip = ip;
@@ -124,7 +122,7 @@ class User {
 		if (seq) {
 			this.Seq++;
 		}
-
+		
 		const changedData = this.Compress({
 			...data,
 			// eslint-disable-next-line id-length
@@ -134,14 +132,13 @@ class User {
 		this.Ws.send(changedData);
 	}
 
-	public Close(code: number, reason: string, force: boolean, soft?: boolean) {
+	public Close(code: number, reason: string, soft?: boolean) {
 		try {
 			if (this.Closed) {
 				return; // Its already closed, why are you trying to close it again?
 			}
 
-			if (soft) {
-				// soft is when the user is closing the connection
+			if (soft) { // soft is when the connection is already terminated
 				this.Closed = true;
 				this.ClosedAt = Date.now();
 				this.ClosedCode = code;
@@ -149,13 +146,7 @@ class User {
 				return;
 			}
 
-			if (force) {
-				this.Ws.close(code, reason);
-			} else {
-				this.Ws.send(new Errors(reason).toString());
-
-				this.Ws.close(code, reason);
-			}
+			this.Ws.close(code, reason);
 
 			this.Closed = true;
 			this.ClosedAt = Date.now();
@@ -165,109 +156,6 @@ class User {
 
 			this.Ws.terminate();
 		}
-	}
-
-	/**
-	 * @deprecated Just do `this.Authed = true` or `this.Authed = false` Will be removed in 0.4.0
-	 * @param authed - Whether the user is authenticated or not
-	 */
-	public setAuthed(authed: boolean) {
-		this.Authed = authed;
-	}
-
-	/**
-	 * @deprecated Just do `this.Closed = true` or `this.Closed = false` Will be removed in 0.4.0
-	 * @param closed - Whether the user is closed or not
-	 */
-	public setClosed(closed: boolean) {
-		this.Closed = closed;
-	}
-
-	/**
-	 * @deprecated Just do `this.Id = sessionId` Will be removed in 0.4.0
-	 * @param sessionId - The session id of the user
-	 */
-	public setSessionId(sessionId: string) {
-		this.Id = sessionId;
-	}
-
-	/**
-	 * @deprecated Just do `this.Ws = ws` Will be removed in 0.4.0
-	 * @param ws - The websocket of the user
-	 */
-	public setWs(ws: WebSocket.WebSocket) {
-		this.Ws = ws;
-	}
-
-	/**
-	 * @deprecated Just do `this.HeartbeatInterval = interval` Will be removed in 0.4.0
-	 * @param interval - The interval of the heartbeat
-	 */
-	public setHeartbeatInterval(interval: number) {
-		this.HeartbeatInterval = interval;
-	}
-
-	/**
-	 * @deprecated Just do `this.LastHeartbeat = lastHeartbeat` Will be removed in 0.4.0
-	 * @param lastHeartbeat - The last heartbeat of the user
-	 */
-	public setLastHeartbeat(lastHeartbeat: number) {
-		this.LastHeartbeat = lastHeartbeat;
-	}
-
-	/**
-	 * @deprecated Just do `this.AuthType = auth` Will be removed in 0.4.0
-	 * @param auth - The auth type of the user
-	 */
-	public setAuth(auth: number) {
-		this.AuthType = auth;
-	}
-
-	/**
-	 * @deprecated Just do `this.Encoding = encoding` Will be removed in 0.4.0
-	 * @param encoding - The encoding of the user
-	 */
-	public setEncoding(encoding: 'json') {
-		this.Encoding = encoding;
-	}
-
-	/**
-	 * @deprecated Just do `this.Compression = compression` Will be removed in 0.4.0
-	 * @param compression - Whether the payloads are compressed or not
-	 */
-	public setCompression(compression: boolean) {
-		this.Compression = compression;
-	}
-
-	/**
-	 * @deprecated Just do `this.Params = params` Will be removed in 0.4.0
-	 * @param params - The params of the user
-	 */
-	public setParams(params: { [key: string]: string | undefined; }) {
-		this.Params = params;
-	}
-
-	/**
-	 * @deprecated Just do `this.SocketVersion = Number.parseInt(version, 10)` Will be removed in 0.4.0
-	 * @param version - The version of the socket
-	 */
-	public setVersion(version: string) {
-		this.SocketVersion = Number.parseInt(version, 10);
-	}
-
-	/**
-	 * @deprecated Use {@link User#Resume} instead. Will be removed in 0.4.0
-	 * @param seq - The sequence number to resume with
-	 * @returns Whether the resume was successful or not
-	 */
-	public resume(seq: number): boolean {
-		if (!this.ResumeDepWarning) {
-			deprecate(() => {
-				this.ResumeDepWarning = true;
-			}, 'Use User#Resume instead, User#resume will be removed in 0.4.0');
-		}
-
-		return this.Resume(seq);
 	}
 
 	public Resume(seq: number): boolean {

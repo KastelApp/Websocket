@@ -36,7 +36,7 @@ export default class HeartBeat extends Events {
 		if (user.Seq !== data.Sequence) {
 			this.Websocket.Logger.debug(`Expected ${user.Seq} but got ${data.Sequence}`);
 
-			user.Close(HardCloseCodes.InvalidSeq, 'Invalid sequence', false);
+			user.Close(HardCloseCodes.InvalidSeq, 'Invalid sequence');
 
 			return;
 		}

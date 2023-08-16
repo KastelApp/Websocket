@@ -4,11 +4,11 @@ import type http from 'node:http';
 import process from 'node:process';
 import { setInterval } from 'node:timers';
 import WebSocket, { WebSocketServer } from 'ws';
-import Errors from './Errors.js';
+import WsError from './Errors.js';
 import Events from './EventsHandler.js';
 import type Logger from './Logger.js';
 import User from './User.js';
-import Utils, { HardCloseCodes, AuthCodes, Regexes, SoftCloseCodes } from './Utils.js';
+import Utils, { HardCloseCodes, AuthCodes, Regexes, SoftCloseCodes, HardOpCodes } from './Utils.js';
 
 const WebsocketServerBuilder = WebSocket.Server ?? WebSocketServer;
 
@@ -29,8 +29,8 @@ export class WebsocketServer extends EventEmitter {
 	public ConnectedUsers: Map<string, User>;
 
 	public MainSocket: WebSocket.Server | null;
-	
-	private readonly Logger: Logger
+
+	private readonly Logger: Logger;
 
 	public Server: http.Server<typeof http.IncomingMessage, typeof http.ServerResponse> | null;
 
@@ -54,8 +54,8 @@ export class WebsocketServer extends EventEmitter {
 		super();
 
 		this.ConnectedUsers = new Map();
-		
-		this.Logger = logger
+
+		this.Logger = logger;
 
 		this.MainSocket = null;
 
@@ -98,11 +98,19 @@ export class WebsocketServer extends EventEmitter {
 		wss.on('connection', (socket: WebSocket.WebSocket, req) => {
 			const ip = req.socket.remoteAddress as string;
 			const ipConnections = Array.from(this.ConnectedUsers.values()).filter((usr) => usr.Ip === ip);
+			const InvalidRequest = new WsError(HardOpCodes.Error)
 
 			if (ipConnections.length >= this.MaxPerIp) {
 				// (M) = IP (max connections reached)
-				socket.send(new Errors('Invalid request (M)').toString());
 
+				InvalidRequest.AddError({
+					Connection: {
+						Code: 'MaxConnections',
+						Message: 'Max connections reached',
+					}
+				})
+				
+				socket.send(InvalidRequest.toString());
 				socket.close(HardCloseCodes.AuthenticationFailed);
 
 				this.Logger.debug(`Max connections reached for ${ip}`);
@@ -114,8 +122,14 @@ export class WebsocketServer extends EventEmitter {
 
 			if (lastMinuteConnections.length >= this.MaxConnectionsPerMinute) {
 				// (MX) = IP (max connections reached)
-				socket.send(new Errors('Invalid request (MX)').toString());
-
+				InvalidRequest.AddError({
+					Connection: {
+						Code: 'MaxConnections',
+						Message: 'Max connections reached',
+					}
+				})
+				
+				socket.send(InvalidRequest.toString());
 				socket.close(HardCloseCodes.AuthenticationFailed);
 
 				this.Logger.debug(`Max connections reached for ${ip} in the last minute`);
@@ -127,8 +141,15 @@ export class WebsocketServer extends EventEmitter {
 
 			if (this.AllowedIps.length > 0 && !this.AllowedIps.includes(ip as string)) {
 				// (P) = IP (not allowed)
-				socket.send(new Errors('Invalid request (P)').toString());
 
+				InvalidRequest.AddError({
+					Connection: {
+						Code: 'InvalidConnection',
+						Message: 'Invalid connection',
+					}
+				})
+						
+				socket.send(InvalidRequest.toString());
 				socket.close(HardCloseCodes.AuthenticationFailed);
 
 				this.Logger.debug(`Connection from ${ip} was not allowed`);
@@ -141,7 +162,15 @@ export class WebsocketServer extends EventEmitter {
 
 			if (!clientOrBot || !params) {
 				// (T) = Type (not found)
-				socket.send(new Errors('Invalid request (T)').toString());
+				
+				InvalidRequest.AddError({
+					Connection: {
+						Code: 'InvalidConnection',
+						Message: 'Failed to detect type of connection',
+					}
+				})
+
+				socket.send(InvalidRequest.toString());
 				socket.close(HardCloseCodes.AuthenticationFailed);
 
 				this.Logger.debug(`Was not client or bot from ${ip}`);
@@ -149,8 +178,8 @@ export class WebsocketServer extends EventEmitter {
 				return;
 			}
 
-			socket.id = Utils.GenerateSessionId()
-			
+			socket.id = Utils.GenerateSessionId();
+
 			const user = new User(socket.id, socket, false, ip);
 
 			user.AuthType = (
@@ -167,8 +196,17 @@ export class WebsocketServer extends EventEmitter {
 			if (!usersParams.encoding || usersParams.encoding !== 'json') {
 				// (EN) = Encoding (not json)
 
-				user.Close(HardCloseCodes.InvalidRequest, 'Invalid request (EN)', this.CloseOnError);
+				InvalidRequest.AddError({
+					Encoding: {
+						Code: 'InvalidEncoding',
+						Message: `The Encoding you provided was invalid, Accepted types are "json", received "${usersParams.encoding ?? 'none'}"`,
+					}
+				})
 				
+				socket.send(InvalidRequest.toString());
+				socket.close(HardCloseCodes.InvalidRequest);
+				user.Close(InvalidRequest.Op, 'Invalid request (EN)');
+
 				this.Logger.debug(`Encoding was not json from ${ip}`);
 
 				return;
@@ -177,15 +215,24 @@ export class WebsocketServer extends EventEmitter {
 			if (!usersParams.v) {
 				// (V) = Version (not found)
 
-				user.Close(HardCloseCodes.InvalidRequest, 'Invalid request (V)', this.CloseOnError);
+				InvalidRequest.AddError({
+					Version: {
+						Code: 'InvalidVersion',
+						Message: 'The Version you provided was invalid',
+					}
+				})
 				
+				socket.send(InvalidRequest.toString());
+				socket.close(HardCloseCodes.InvalidRequest);
+				user.Close(InvalidRequest.Op, 'Invalid request (V)');
+
 				this.Logger.debug(`Version was not found from ${ip}`);
 
 				return;
 			}
 
 			user.Encoding = usersParams.encoding;
-			user.SocketVersion = Number(usersParams.v)
+			user.SocketVersion = Number.parseInt(usersParams.v, 10);
 
 			this.ConnectedUsers.set(user.Id, user);
 
@@ -194,10 +241,11 @@ export class WebsocketServer extends EventEmitter {
 			socket.on('close', (code: number) => {
 				if (user.Closed || user.ClosedAt) {
 					this.emit('close', user, true);
+					
 					return; // We were expecting this
 				}
 
-				user.Close(code, 'Connection closed', false, true);
+				user.Close(code, 'Connection closed', true);
 
 				this.emit('close', user, false);
 			});
@@ -212,6 +260,15 @@ export class WebsocketServer extends EventEmitter {
 
 					if (!json.Event && !json.Op) {
 						// (E/O) = Event or OP
+						
+						InvalidRequest.AddError({
+							Op: {
+								Code: 'InvalidOp',
+								Message: 'The Op you provided was invalid',
+							}
+						})
+						
+						socket.send(InvalidRequest.toString());
 						user.Close(HardCloseCodes.InvalidRequest, 'Invalid request (E/O)', this.CloseOnError);
 
 						this.Logger.debug(`Event or OP was not found from ${user.Id} (${user.Ip})`, json);

@@ -1,31 +1,72 @@
-import { HardCloseCodes } from './Utils.js';
+class WsError {
 
-class Errors {
-	public Reason: string;
+	public Op: number
+	
+	public D: {
+        Errors: {
+			[key: string]: any;
+		}
+    };
 
-	public Op: number;
+	public constructor(OpCode: number) {
+		this.Op = OpCode;
 
-	public constructor(reason: string, op?: number) {
-		this.Reason = reason;
-
-		this.Op = op ?? HardCloseCodes.UnknownError;
-	}
-
-	public toJSON() {
-		return {
-			op: this.Op,
-			// eslint-disable-next-line id-length
-			d: {
-				message: this.Reason,
-			},
+		this.D = {
+			Errors: {}
 		};
 	}
-
+	
+	public AddToError(ErrorName: string, ErrorData: {
+		Code: number | string;
+		Message: string;
+	}) {
+		this.D.Errors[ErrorName] = ErrorData;
+	}
+	
+	public AddError(ErrorData: {
+		[key: string]: {
+			Code: number | string;
+			Message: string;
+		}
+	}) {
+		for (const [key, value] of Object.entries(ErrorData)) {
+			this.D.Errors[key] = value;
+		}
+	  }
+	
+	public AddArrayError(ErrorName: string, ErrorData: {
+		Code: number | string;
+		Message: string;
+	}[]) {
+		/*
+		{
+			"ErrorName": {
+				"0": {
+					"Code": "InvalidSomething",
+					"Message": "Something is invalid"
+				}
+			}
+		}
+		 */
+		this.D.Errors[ErrorName] = {};
+		
+		for (const [index, error] of ErrorData.entries()) {
+			this.D.Errors[ErrorName][index] = error;
+		}
+	}
+	
+	public toJSON() {
+		return {
+			Op: this.Op,
+			D: this.D
+		}
+	}
+	
 	public toString() {
 		return JSON.stringify(this.toJSON());
 	}
 }
 
-export default Errors;
+export default WsError;
 
-export { Errors };
+export { WsError };
