@@ -220,8 +220,6 @@ export default class Identify extends Events {
 				HeartbeatInterval: User.HeartbeatInterval,
 			}
 		}, false);
-
-		console.log(User.WsUser);
 	}
 
 	private EmptyStringToNull<T = any>(obj: T): T {
