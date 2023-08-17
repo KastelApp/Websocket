@@ -1,40 +1,24 @@
-import type { User } from '@kastelll/core';
-import { Events, HardCloseCodes, WsUtils } from '@kastelll/core';
-import type { User as RawUser, Guild, Friend, GuildMember, Channel, Role, PermissionsOverides } from '../../Types/Raw';
-import type { RawSettings } from '../../Types/User/Settings';
-import type { PartialUser, UserAtMe } from '../../Types/User/User';
-import FlagFields from '../../Utils/Classes/BitFields/Flags.js';
-import { Encryption } from '../../Utils/Classes/Encryption.js';
+import { Flags } from '../../Constants.js';
+import type IdentifyPayload from '../../Types/V1/Identify.js';
+import type { Channel, Guild, PermissionOverride, Role } from '../../Types/V1/Identify.js';
+import Encryption from '../../Utils/Classes/Encryption.js';
+import WsError from '../../Utils/Classes/Errors.js';
+import Events from '../../Utils/Classes/Events.js';
+import FlagUtilsBInt from '../../Utils/Classes/Flags.js';
+import { OpCodes } from '../../Utils/Classes/OpCodes.js';
 import Token from '../../Utils/Classes/Token.js';
-import UserUtils from '../../Utils/Classes/UserUtils.js';
-import { OpCodes } from '../../Utils/Classes/WsUtils.js';
-import schemaData from '../../Utils/SchemaData.js';
-import { SettingSchema } from '../../Utils/Schemas/Schemas.js';
+import type User from '../../Utils/Classes/User.js';
+import Utils, { AuthCodes, HardCloseCodes, HardOpCodes } from '../../Utils/Classes/Utils.js';
+import type Websocket from '../../Utils/Classes/Websocket.js';
+import type { User as UserType } from '../../Utils/Cql/Types/index.js';
 
-type FixedGuildMember = Omit<GuildMember, 'Roles' | 'User'> & {
-	Roles: Role[];
-	User: PartialUser;
-};
+export default class Identify extends Events {
+	public Websocket: Websocket;
 
-type FixedChannel = Channel & {
-	PermissionsOverides: PermissionsOverides[];
-};
-
-type FixedGuild = Omit<Guild, 'Channels' | 'CoOwners' | 'Members' | 'Owner' | 'Roles'> & {
-	Channels: FixedChannel[];
-	CoOwners: FixedGuildMember[];
-	Members: FixedGuildMember[];
-	Owner: FixedGuildMember;
-	Roles: Role[];
-};
-
-type UpToDateUser = RawUser & {
-	Guilds: FixedGuild[];
-};
-
-export class Identify extends Events {
-	public constructor() {
+	public constructor(wss: Websocket) {
 		super();
+
+		this.Websocket = wss;
 
 		this.AuthRequired = false;
 
@@ -48,249 +32,320 @@ export class Identify extends Events {
 	}
 
 	public override async Execute(
-		user: User,
-		data: {
+		User: User,
+		Data: {
 			Settings: {
 				// idk what else currently
 				Compress: boolean; // Whether the client supports compression
-				Intents?: number; // The intents the client has (WIP)
+				Intents?: number; // The intents the client has (WIP) (Bot Only)
 			};
 			Token: string;
 		},
 	) {
-		if (user.Authed) {
-			user.close(HardCloseCodes.AlreadyAuthenticated, 'Already authed', false);
+		const FailedToAuth = new WsError(HardOpCodes.Error);
+
+		if (!Data.Token || User.Authed) { // lazy way to check if the user is already authed
+
+			FailedToAuth.AddError({
+				Token: {
+					Code: 'InvalidToken',
+					Message: 'The token you provided was invalid.'
+				}
+			});
+
+			User.Send(FailedToAuth);
+			User.Close(HardCloseCodes.AuthenticationFailed, 'Invalid Token');
 
 			return;
 		}
 
-		if (data?.Settings?.Compress) {
-			user.setCompression(true);
-		}
+		const ValidatedToken = Token.ValidateToken(Data.Token);
 
-		if (!data.Token) {
-			user.close(HardCloseCodes.AuthenticationFailed, 'Invalid token', false);
+		if (!ValidatedToken) {
 
-			return;
-		}
+			FailedToAuth.AddError({
+				Token: {
+					Code: 'InvalidToken',
+					Message: 'The token you provided was invalid.'
+				}
+			});
 
-		const ValidateToken = Token.ValidateToken(data.Token);
-
-		if (!ValidateToken) {
-			// user.close(WsUtils.HARD_CLOSE_CODES.AUTHENTICATION_FAILED, 'Invalid token', false);
-
-			user.close(HardCloseCodes.AuthenticationFailed, 'Invalid token', false);
+			User.Send(FailedToAuth);
+			User.Close(HardCloseCodes.AuthenticationFailed, 'Invalid Token');
 
 			return;
 		}
 
-		const TokenData = Token.DecodeToken(data.Token);
+		const DecodedToken = Token.DecodeToken(Data.Token);
 
-		if (!TokenData) {
-			// This should never happen, Since ValidateToken is true and
-			// the only way for it to be true is if it was decoded successfully (and some other checks)
-			// user.close(WsUtils.HARD_CLOSE_CODES.UNKNOWN_ERROR, 'Unknown error', false);
-
-			user.close(HardCloseCodes.UnknownError, 'Unknown error', false);
-
-			return;
-		}
-
-		const UsersSettings = await SettingSchema.findOne({
-			User: Encryption.encrypt(TokenData.Snowflake),
+		const UsersSettings = await this.Websocket.Cassandra.Models.Settings.get({
+			UserId: Encryption.Encrypt(DecodedToken.Snowflake),
+		}, {
+			fields: ['bio', 'language', 'mentions', 'presence', 'privacy', 'status', 'theme', 'tokens']
 		});
 
-		if (!UsersSettings?.Tokens?.includes(Encryption.encrypt(data.Token))) {
-			// user.close(WsUtils.HARD_CLOSE_CODES.AUTHENTICATION_FAILED, 'Invalid token', false);
+		const UserData = await this.Websocket.Cassandra.Models.User.get({
+			UserId: Encryption.Encrypt(DecodedToken.Snowflake),
+		});
 
-			user.close(HardCloseCodes.AuthenticationFailed, 'Invalid token', false);
+		if (!UsersSettings || !UserData) {
+			this.Websocket.Logger.debug("User settings wasn't found", (DecodedToken.Snowflake));
+			this.Websocket.Logger.debug(UserData, UsersSettings);
 
-			return;
-		}
+			FailedToAuth.AddError({
+				Token: {
+					Code: 'InvalidToken',
+					Message: 'The token you provided was invalid.'
+				}
+			});
 
-		await UsersSettings.populate<{
-			User: RawUser;
-		}>('User');
-
-		await UsersSettings.populate<{
-			User: RawUser & {
-				Friends: Friend[];
-				Guilds: Guild[];
-			};
-		}>(['User.Guilds', 'User.Friends']);
-
-		await UsersSettings.populate<{
-			User: RawUser & {
-				Guilds: Guild & {
-					Channels: Channel[];
-					CoOwners: GuildMember[];
-					Members: GuildMember[];
-					Owner: GuildMember;
-					Roles: Role[];
-				};
-			};
-		}>([
-			'User.Guilds.Owner',
-			'User.Guilds.Members',
-			'User.Guilds.Channels',
-			'User.Guilds.CoOwners',
-			'User.Guilds.Roles',
-		]);
-
-		await UsersSettings.populate<{
-			User: UpToDateUser;
-		}>([
-			'User.Guilds.Channels.PermissionsOverides',
-			'User.Guilds.Owner.User',
-			'User.Guilds.Owner.Roles',
-			'User.Guilds.CoOwners.User',
-			'User.Guilds.CoOwners.Roles',
-			'User.Guilds.Members.User',
-		]);
-
-		const UserSettingsDecrypted = Encryption.completeDecryption({
-			...UsersSettings.toObject(),
-			_id: undefined,
-		}) as RawSettings & {
-			User: RawUser;
-		};
-
-		const Flags = new FlagFields(UserSettingsDecrypted.User.Flags);
-
-		if (Flags.hasString('WaitingOnDisableDataUpdate') || Flags.hasString('WaitingOnAccountDeletion')) {
-			// user.close(
-			//   WsUtils.HARD_CLOSE_CODES.AUTHENTICATION_FAILED,
-			//   'Your account is currently being deleted or it is disabled.',
-			//   false,
-			// );
-
-			user.close(
-				HardCloseCodes.AuthenticationFailed,
-				'Your account is currently being deleted or it is disabled.',
-				false,
-			);
+			User.Send(FailedToAuth);
+			User.Close(HardCloseCodes.AuthenticationFailed, 'Invalid Token');
 
 			return;
 		}
 
-		if (UserSettingsDecrypted.User.Banned || UserSettingsDecrypted.User.Locked) {
-			// user.close(WsUtils.HARD_CLOSE_CODES.AUTHENTICATION_FAILED, 'Your account is currently locked or banned.', false);
+		const UserFlags = new FlagUtilsBInt<typeof Flags>(UserData.Flags, Flags);
 
-			user.close(HardCloseCodes.AuthenticationFailed, 'Your account is currently locked or banned.', false);
+		if (
+			UserFlags.hasString('AccountDeleted') ||
+			UserFlags.hasString('WaitingOnDisableDataUpdate') ||
+			UserFlags.hasString('WaitingOnAccountDeletion')
+		) {
 
-			return;
-		}
+			this.Websocket.Logger.debug('Account Is Deleted or about to be deleted');
 
-		user.setAuthed(true);
-
-		const NormalData = schemaData('User', UserSettingsDecrypted.User) as UserAtMe;
-
-		const Guilds = schemaData('Guilds', Encryption.completeDecryption(UserSettingsDecrypted.User.Guilds)) as (Omit<
-			FixedGuild,
-			'_id' | 'Channels' | 'CoOwners' | 'Members' | 'Owner' | 'Roles'
-		> & {
-			Channels: (Omit<FixedChannel, '_id'> & {
-				Id: string;
-			})[];
-			CoOwners: (Omit<FixedGuildMember, '_id' | 'Roles'> & {
-				Id: string;
-				Roles: (Omit<Role, '_id'> & {
-					Id: string;
-				})[];
-			})[];
-			Id: string;
-			Members: (Omit<FixedGuildMember, '_id' | 'Roles'> & {
-				Id: string;
-				Roles: (Omit<Role, '_id'> & {
-					Id: string;
-				})[];
-			})[];
-			Owner: Omit<FixedGuildMember, '_id' | 'Roles'> & {
-				Id: string;
-				Roles: (Omit<Role, '_id'> & {
-					Id: string;
-				})[];
-			};
-			Roles: (Omit<Role, '_id'> & {
-				Id: string;
-			})[];
-		})[];
-
-		NormalData.PublicFlags = Number(FlagFields.RemovePrivateFlags(BigInt(NormalData.PublicFlags as number)));
-
-		user.UserData = {
-			...NormalData,
-			FlagUtils: Flags,
-			Guilds: Guilds.map((guild) => guild.Id),
-		};
-
-		const Utils = new UserUtils(data.Token, user);
-
-		// eslint-disable-next-line require-atomic-updates -- Check back later
-		user.UserData.AllowedChannels = (await Utils.ChannelsCanSendMessagesIn(true))
-			.filter((chan) => chan.CanSend)
-			.map((chan) => chan.ChannelId);
-
-		user.setHeartbeatInterval(WsUtils.GenerateHeartbeatInterval());
-
-		user.setLastHeartbeat(Date.now());
-
-		console.log(user.UserData);
-
-		user.send(
-			{
-				op: OpCodes.Authed,
-				// eslint-disable-next-line id-length
-				d: {
-					User: NormalData,
-					Guilds: Guilds.map((guild) => {
-						return {
-							...guild,
-							Members: guild.Members.filter((member) => member.Id === user.UserData.Id).map((member) => {
-								return {
-									...member,
-									User: {
-										...member.User,
-										PublicFlags: Number(FlagFields.RemovePrivateFlags(BigInt(member.User.PublicFlags as number))),
-									},
-									// Members roles is broken so we just want to default tot he UserSettingsDecrypted roles
-									Roles: (UserSettingsDecrypted.User.Guilds as unknown as FixedGuild[])
-										.find((gl) => gl._id === guild.Id)
-										?.Roles.map((role) => role._id) as string[],
-								};
-							}),
-							Owner: {
-								...guild.Owner,
-								// we do this as we just want the role ids not the populated roles
-								Roles: guild.Owner.Roles.map((role) => role.Id),
-								User: {
-									...guild.Owner.User,
-									PublicFlags: Number(FlagFields.RemovePrivateFlags(BigInt(guild.Owner.User.PublicFlags as number))),
-								},
-							},
-							CoOwners: guild.CoOwners.map((coOwner) => {
-								return {
-									...coOwner,
-									Roles: coOwner.Roles.map((role) => role.Id),
-									User: {
-										...coOwner.User,
-										PublicFlags: Number(FlagFields.RemovePrivateFlags(BigInt(coOwner.User.PublicFlags as number))),
-									},
-								};
-							}),
-						};
-					}),
-					Settings: {
-						Theme: UserSettingsDecrypted.Theme,
-						Language: UserSettingsDecrypted.Language,
-						Privacy: UserSettingsDecrypted.Privacy,
-					},
-					Mentions: UserSettingsDecrypted.Mentions,
-					SessionId: user.Id,
-					HeartbeatInterval: user.HeartbeatInterval,
+			FailedToAuth.AddError({
+				Email: {
+					Code: 'AccountDeleted',
+					Message: 'The Account has been deleted',
 				},
+			});
+
+			User.Send(FailedToAuth);
+			User.Close(HardCloseCodes.AuthenticationFailed, 'Account Deleted');
+
+			return;
+		}
+
+		if (UserFlags.hasString('Terminated') || UserFlags.hasString('Disabled')) {
+
+			this.Websocket.Logger.debug('Account Is Disabled or Terminated');
+
+			FailedToAuth.AddError({
+				Email: {
+					Code: 'AccountDisabled',
+					Message: 'The Account has been disabled',
+				},
+			});
+
+			User.Send(FailedToAuth);
+			User.Close(HardCloseCodes.AuthenticationFailed, 'Account Disabled');
+
+			return;
+		}
+
+		if (UserFlags.hasOneArrayString(['Bot', 'VerifiedBot']) && User.AuthType !== AuthCodes.Bot) {
+
+			this.Websocket.Logger.debug('Account Is a Bot but not authenticated as a bot');
+
+			FailedToAuth.AddError({
+				Token: {
+					Code: 'InvalidToken',
+					Message: 'The token you provided was invalid.'
+				}
+			});
+
+			User.Send(FailedToAuth);
+			User.Close(HardCloseCodes.AuthenticationFailed, 'Account Is Bot');
+
+			return;
+		}
+
+		const CompleteDecrypted: UserType = Encryption.CompleteDecryption({
+			...UserData,
+			Flags: UserData.Flags.toString()
+		});
+
+		User.WsUser = {
+			Token: Data.Token,
+			Bot: UserFlags.hasString('Bot') || UserFlags.hasString('VerifiedBot'),
+			FlagsUtil: UserFlags,
+			Email: CompleteDecrypted.Email,
+			Id: CompleteDecrypted.UserId,
+			Password: CompleteDecrypted.Password,
+			Guilds: CompleteDecrypted.Guilds,
+			Channels: {}
+		};
+
+		const Payload: Partial<IdentifyPayload> = {
+			User: {
+				Avatar: CompleteDecrypted.Avatar,
+				Email: CompleteDecrypted.Email,
+				EmailVerified: UserFlags.hasString('EmailVerified'),
+				GlobalNickname: CompleteDecrypted.GlobalNickname,
+				Id: CompleteDecrypted.UserId,
+				PhoneNumber: CompleteDecrypted.PhoneNumber,
+				PublicFlags: Number(UserFlags.cleaned),
+				Tag: CompleteDecrypted.Tag,
+				TwoFaEnabled: UserFlags.hasString('TwoFaEnabled'),
+				TwoFaVerified: UserFlags.hasString('TwoFaVerified'),
+				Username: CompleteDecrypted.Username,
+				Bio: Encryption.Decrypt(UsersSettings.Bio),
 			},
-			false,
-		);
+			Settings: {
+				Language: UsersSettings.Language,
+				Presence: UsersSettings.Presence,
+				Privacy: UsersSettings.Privacy,
+				Status: UsersSettings.Status,
+				Theme: UsersSettings.Theme,
+			},
+			Mentions: UsersSettings.Mentions ?? [],
+			Guilds: await this.FetchGuilds(Encryption.CompleteDecryption(UserData.Guilds))
+		};
+
+		for (const Guild of (Payload.Guilds ?? [])) {
+			User.WsUser.Channels[Guild.Id] = Guild.Channels.map((channel) => channel.Id);
+		}
+
+		User.Authed = true;
+		User.LastHeartbeat = Date.now();
+		User.HeartbeatInterval = Utils.GenerateHeartbeatInterval();
+		User.Compression = Data.Settings.Compress ?? false;
+
+		User.Send({
+			Op: OpCodes.Authed,
+			D: {
+				...this.EmptyStringToNull(Payload),
+				HeartbeatInterval: User.HeartbeatInterval,
+			}
+		}, false);
+	}
+
+	private EmptyStringToNull<T = any>(obj: T): T {
+		if (typeof obj !== 'object' || obj === null) {
+			if (typeof obj === 'string' && obj === '') return null as T;
+
+			return obj;
+		}
+
+		if (!Array.isArray(obj)) {
+			const newObject: any = {};
+
+			for (const [key, value] of Object.entries(obj)) {
+				if (value instanceof Date || value === null) {
+					newObject[key] = value;
+				} else if (typeof value === 'object') {
+					newObject[key] = this.EmptyStringToNull(value);
+				} else {
+					newObject[key] = value === '' ? null : value;
+				}
+
+			}
+
+			return newObject;
+		} else if (Array.isArray(obj)) {
+			return obj.map((value) => this.EmptyStringToNull(value)) as T;
+		}
+
+		return obj;
+	}
+
+	private async FetchChannels(GuildId: string): Promise<Channel[]> {
+		const FixedChannels: Channel[] = [];
+
+		const Channels = await this.Websocket.Cassandra.Models.Channel.find({
+			GuildId: Encryption.Encrypt(GuildId)
+		});
+
+		for (const Channel of Channels.toArray()) {
+			const PermissionOverrides: PermissionOverride[] = [];
+
+			for (const PermissionOverrideId of (Channel.PermissionsOverrides ?? [])) {
+				const Override = await this.Websocket.Cassandra.Models.PermissionOverride.get({
+					PermissionId: PermissionOverrideId
+				});
+
+				if (!Override) continue;
+
+				PermissionOverrides.push({
+					Allow: Override.Allow.toString(),
+					Deny: Override.Deny.toString(),
+					Slowmode: Override.Slowmode,
+					Type: Override.Type,
+					Id: Encryption.Decrypt(Override.Id),
+					Editable: Override.Editable,
+				});
+			}
+
+			FixedChannels.push({
+				Id: Channel.ChannelId,
+				Name: Channel.Name,
+				AllowedMenions: Channel.AllowedMentions,
+				Children: Channel.Children ?? [],
+				Description: Channel.Description,
+				Nsfw: Channel.Nsfw,
+				ParentId: Channel.ParentId,
+				PermissionsOverrides: PermissionOverrides,
+				Position: Channel.Position,
+				Slowmode: Channel.Slowmode,
+				Type: Channel.Type
+			});
+		}
+
+		return Encryption.CompleteDecryption(FixedChannels);
+	}
+
+	private async FetchGuilds(Guilds: string[]): Promise<Guild[]> {
+		const BuildGuilds = [];
+
+		for (const GuildId of Guilds) {
+			const Guild = await this.Websocket.Cassandra.Models.Guild.get({
+				GuildId: Encryption.Encrypt(GuildId)
+			});
+
+			if (!Guild) continue;
+
+			const FixedRoles: Role[] = [];
+
+			const FixedGuild: Guild = {
+				Id: Guild.GuildId,
+				Icon: Guild.Icon,
+				CoOwners: Guild.CoOwners ?? [],
+				Features: Guild.Features ?? [],
+				Description: Guild.Description,
+				Channels: await this.FetchChannels(GuildId) as Channel[],
+				Flags: Guild.Flags,
+				MaxMembers: Guild.MaxMembers,
+				Name: Guild.Name,
+				OwnerId: Guild.OwnerId,
+				Roles: [],
+			};
+
+			const Roles = await this.Websocket.Cassandra.Models.Role.find({
+				GuildId: Encryption.Encrypt(GuildId)
+			});
+
+			for (const Role of Roles.toArray()) {
+				FixedRoles.push({
+					Id: Role.RoleId,
+					Name: Role.Name,
+					AllowedMenions: Role.AllowedMentions,
+					AllowedNsfw: Role.AllowedNsfw,
+					Color: Role.Color,
+					Deleteable: Role.Deleteable,
+					Hoisted: Role.Hoisted,
+					Permissions: Role.Permissions.toString(),
+					Position: Role.Position
+				});
+			}
+
+			BuildGuilds.push({
+				...FixedGuild,
+				Roles: FixedRoles
+			});
+		}
+
+		return Encryption.CompleteDecryption(BuildGuilds);
 	}
 }

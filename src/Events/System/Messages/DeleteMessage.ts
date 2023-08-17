@@ -1,12 +1,17 @@
-import type { User } from '@kastelll/core';
-import { Events, AuthCodes } from '@kastelll/core';
-import { SystemOpCodes, OpCodes } from '../../../Utils/Classes/WsUtils.js';
-import WSS from '../../../index.js';
+import Events from '../../../Utils/Classes/Events.js';
+import { SystemOpCodes, OpCodes } from '../../../Utils/Classes/OpCodes.js';
+import type User from '../../../Utils/Classes/User.js';
+import { AuthCodes } from '../../../Utils/Classes/Utils.js';
+import type Websocket from '../../../Utils/Classes/Websocket.js';
 
 // This is Sent from the API to the System, then System sends it to the Client
-export class DeleteMessage extends Events {
-	public constructor() {
+export default class DeleteMessage extends Events {
+	public Websocket: Websocket;
+
+	public constructor(wss: Websocket) {
 		super();
+
+		this.Websocket = wss;
 
 		this.AuthRequired = true;
 
@@ -32,20 +37,5 @@ export class DeleteMessage extends Events {
 			};
 		},
 	) {
-		for (const Client of WSS.connectedUsers.values()) {
-			if (Client.AuthType !== AuthCodes.User) continue;
-
-			if (Client.UserData?.AllowedChannels?.includes(data.Message.ChannelId)) {
-				Client.send({
-					op: OpCodes.MessageDelete,
-					event: 'MessageDelete',
-					d: data.Message,
-				});
-			}
-		}
-
-		user.send({
-			op: SystemOpCodes.DeleteMessageAck,
-		});
 	}
 }

@@ -9,29 +9,25 @@
  * GPL 3.0 Licensed
  */
 
-import type schemaExports from '../Utils/SchemaTypes/Exports';
+import type { Flags } from "../Constants";
+import type { FlagUtilsBInt } from "../Utils/Classes/Flags";
 
-interface SchemaDataOptionsBase {
-	extended: false | true;
-	name: string;
-}
-
-interface SchemaDataOptionsWithExtends extends SchemaDataOptionsBase {
-	extended: true;
-	extends: keyof typeof schemaExports;
-}
-
-interface SchemaDataOptionsWithoutExtends extends SchemaDataOptionsBase {
-	default: any;
-	expected: ArrayConstructor | BooleanConstructor | DateConstructor | NumberConstructor | StringConstructor;
-	extended: false;
-}
-
-type SchemaDataOptions = SchemaDataOptionsWithExtends | SchemaDataOptionsWithoutExtends;
-
-export interface Schema {
-	data: {
-		[key: string]: SchemaDataOptions;
+export interface WsUser {
+	Bot: boolean;
+	// the IDS not the objects
+	Channels: {
+		[key: string]: string[];
 	};
-	type: ArrayConstructor | ObjectConstructor;
+	Email: string;
+	FlagsUtil: FlagUtilsBInt<typeof Flags>;
+	Guilds: string[];
+	Id: string;
+	Password: string;
+	Token: string; // the IDS not the objects
+}
+
+declare module 'ws' {
+	export interface WebSocket {
+		id: string;
+	}
 }
