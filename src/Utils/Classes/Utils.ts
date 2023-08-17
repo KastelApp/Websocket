@@ -15,10 +15,6 @@ const HardCloseCodes = {
 	ServerShutdown: 4_011, // Server is shutting down
 };
 
-const HardOpCodes = {
-	Error: 15,
-};
-
 const SoftCloseCodes = {
 	UnknownError: 1_000, // Unknown error
 	MissedHeartbeat: 1_001, // Missed heartbeat
@@ -127,4 +123,4 @@ class Utils {
 
 export default Utils;
 
-export { AuthCodes, HardCloseCodes, HardOpCodes, SoftCloseCodes, Regexes, Utils as WsUtils };
+export { AuthCodes, HardCloseCodes, SoftCloseCodes, Regexes, Utils as WsUtils };

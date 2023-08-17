@@ -32,6 +32,7 @@ const OpCodes = {
 	DeleteSession: 30,
 	SelfUpdate: 31,
 	RelationshipUpdate: 32,
+	Error: 33,
 };
 
 const SystemOpCodes = {

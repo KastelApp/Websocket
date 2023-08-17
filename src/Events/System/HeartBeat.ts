@@ -45,7 +45,7 @@ export default class HeartBeat extends Events {
 
 		user.Send(
 			{
-				op: OpCodes.HeartBeatAck,
+				Op: OpCodes.HeartBeatAck,
 			},
 			false,
 		);

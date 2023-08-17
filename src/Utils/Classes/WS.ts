@@ -7,8 +7,9 @@ import WebSocket, { WebSocketServer } from 'ws';
 import WsError from './Errors.js';
 import Events from './EventsHandler.js';
 import type Logger from './Logger.js';
+import { OpCodes } from './OpCodes.js';
 import User from './User.js';
-import Utils, { HardCloseCodes, AuthCodes, Regexes, SoftCloseCodes, HardOpCodes } from './Utils.js';
+import Utils, { HardCloseCodes, AuthCodes, Regexes, SoftCloseCodes } from './Utils.js';
 
 const WebsocketServerBuilder = WebSocket.Server ?? WebSocketServer;
 
@@ -98,7 +99,7 @@ export class WebsocketServer extends EventEmitter {
 		wss.on('connection', (socket: WebSocket.WebSocket, req) => {
 			const ip = req.socket.remoteAddress as string;
 			const ipConnections = Array.from(this.ConnectedUsers.values()).filter((usr) => usr.Ip === ip);
-			const InvalidRequest = new WsError(HardOpCodes.Error)
+			const InvalidRequest = new WsError(OpCodes.Error)
 
 			if (ipConnections.length >= this.MaxPerIp) {
 				// (M) = IP (max connections reached)

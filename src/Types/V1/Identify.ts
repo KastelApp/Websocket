@@ -47,7 +47,7 @@ interface Role {
 }
 
 interface Channel {
-    AllowedMenions: number;
+    AllowedMentions: number;
     Children: string[];
     Description: string;
     Id: string;
@@ -60,6 +60,21 @@ interface Channel {
     Type: number;
 }
 
+interface Member {
+    JoinedAt: Date;
+    Nickname: string;
+    Owner: boolean;
+    Roles: string[];
+    User: {
+        Avatar: string;
+        Flags: string;
+        GlobalNickname: string;
+        Id: string;
+        Tag: string;
+        Username: string;
+    };
+}
+
 interface Guild {
     Channels: Channel[];
     CoOwners: string[];
@@ -69,6 +84,7 @@ interface Guild {
     Icon: string | null;
     Id: string;
     MaxMembers: number;
+    Members: Member[];
     Name: string;
     OwnerId: string;
     Roles: Role[];
@@ -76,7 +92,9 @@ interface Guild {
 
 export default interface IdentifyPayload {
     Guilds: Guild[];
+    HeartbeatInterval: number;
     Mentions: Mention[];
+    SessionId: string;
     Settings: Settings;
     User: UserObject;
 }

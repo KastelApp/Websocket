@@ -8,7 +8,7 @@ import FlagUtilsBInt from '../../Utils/Classes/Flags.js';
 import { OpCodes } from '../../Utils/Classes/OpCodes.js';
 import Token from '../../Utils/Classes/Token.js';
 import type User from '../../Utils/Classes/User.js';
-import Utils, { AuthCodes, HardCloseCodes, HardOpCodes } from '../../Utils/Classes/Utils.js';
+import Utils, { AuthCodes, HardCloseCodes } from '../../Utils/Classes/Utils.js';
 import type Websocket from '../../Utils/Classes/Websocket.js';
 import type { User as UserType } from '../../Utils/Cql/Types/index.js';
 
@@ -42,7 +42,7 @@ export default class Identify extends Events {
 			Token: string;
 		},
 	) {
-		const FailedToAuth = new WsError(HardOpCodes.Error);
+		const FailedToAuth = new WsError(OpCodes.Error);
 
 		if (!Data.Token || User.Authed) { // lazy way to check if the user is already authed
 
@@ -201,7 +201,9 @@ export default class Identify extends Events {
 				Theme: UsersSettings.Theme,
 			},
 			Mentions: UsersSettings.Mentions ?? [],
-			Guilds: await this.FetchGuilds(Encryption.CompleteDecryption(UserData.Guilds))
+			Guilds: await this.FetchGuilds(Encryption.CompleteDecryption(UserData.Guilds), CompleteDecrypted),
+			HeartbeatInterval: Utils.GenerateHeartbeatInterval(),
+			SessionId: User.Id
 		};
 
 		for (const Guild of (Payload.Guilds ?? [])) {
@@ -210,7 +212,7 @@ export default class Identify extends Events {
 
 		User.Authed = true;
 		User.LastHeartbeat = Date.now();
-		User.HeartbeatInterval = Utils.GenerateHeartbeatInterval();
+		User.HeartbeatInterval = Payload.HeartbeatInterval as number;
 		User.Compression = Data.Settings.Compress ?? false;
 
 		User.Send({
@@ -281,7 +283,7 @@ export default class Identify extends Events {
 			FixedChannels.push({
 				Id: Channel.ChannelId,
 				Name: Channel.Name,
-				AllowedMenions: Channel.AllowedMentions,
+				AllowedMentions: Channel.AllowedMentions,
 				Children: Channel.Children ?? [],
 				Description: Channel.Description,
 				Nsfw: Channel.Nsfw,
@@ -296,7 +298,7 @@ export default class Identify extends Events {
 		return Encryption.CompleteDecryption(FixedChannels);
 	}
 
-	private async FetchGuilds(Guilds: string[]): Promise<Guild[]> {
+	private async FetchGuilds(Guilds: string[], User: UserType): Promise<Guild[]> {
 		const BuildGuilds = [];
 
 		for (const GuildId of Guilds) {
@@ -304,8 +306,13 @@ export default class Identify extends Events {
 				GuildId: Encryption.Encrypt(GuildId)
 			});
 
-			if (!Guild) continue;
+			const Member = await this.Websocket.Cassandra.Models.GuildMember.get({
+				UserId: Encryption.Encrypt(User.UserId),
+				GuildId: Encryption.Encrypt(GuildId)
+			}, { allowFiltering: true })
 
+			if (!Guild || !Member) continue;
+			
 			const FixedRoles: Role[] = [];
 
 			const FixedGuild: Guild = {
@@ -320,6 +327,22 @@ export default class Identify extends Events {
 				Name: Guild.Name,
 				OwnerId: Guild.OwnerId,
 				Roles: [],
+				Members: [
+					{
+						User: {
+							Id: User.UserId,
+							Avatar: User.Avatar,
+							Username: User.Username,	
+							Tag: User.Tag,
+							GlobalNickname: User.GlobalNickname,
+							Flags: User.Flags,
+						},
+						JoinedAt: Member.JoinedAt,
+						Nickname: Member.Nickname,
+						Roles: Member.Roles ?? [],
+						Owner: Encryption.Decrypt(Guild.OwnerId) === User.UserId,
+					}
+				]
 			};
 
 			const Roles = await this.Websocket.Cassandra.Models.Role.find({

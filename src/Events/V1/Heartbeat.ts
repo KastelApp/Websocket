@@ -2,7 +2,7 @@ import WsError from '../../Utils/Classes/Errors.js';
 import Events from '../../Utils/Classes/Events.js';
 import { OpCodes } from '../../Utils/Classes/OpCodes.js';
 import type User from '../../Utils/Classes/User.js';
-import { HardCloseCodes, HardOpCodes } from '../../Utils/Classes/Utils.js';
+import { HardCloseCodes } from '../../Utils/Classes/Utils.js';
 import type Websocket from '../../Utils/Classes/Websocket.js';
 
 export default class HeartBeat extends Events {
@@ -33,7 +33,7 @@ export default class HeartBeat extends Events {
 		if (user.Seq !== data.Sequence) {
 			this.Websocket.Logger.debug(`Expected ${user.Seq} but got ${data.Sequence}`);
 
-			const FailedToHeartBeat = new WsError(HardOpCodes.Error);
+			const FailedToHeartBeat = new WsError(OpCodes.Error);
 
 			FailedToHeartBeat.AddError({
 				Sequence: {
@@ -41,7 +41,7 @@ export default class HeartBeat extends Events {
 					Message: 'The sequence you provided was invalid.',
 				}
 			});
-			
+
 			user.Send(FailedToHeartBeat, false);
 			user.Close(HardCloseCodes.InvalidSeq, 'Invalid sequence');
 
@@ -52,7 +52,7 @@ export default class HeartBeat extends Events {
 
 		user.Send(
 			{
-				op: OpCodes.HeartBeatAck,
+				Op: OpCodes.HeartBeatAck,
 			},
 			false,
 		);
