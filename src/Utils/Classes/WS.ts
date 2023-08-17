@@ -356,15 +356,13 @@ export class WebsocketServer extends EventEmitter {
 				if (!user.HeartbeatInterval || !user.LastHeartbeat) continue;
 
 				if (user.LastHeartbeat + user.HeartbeatInterval + 10_000 < Date.now()) {
-					if (process.env.debug) {
 						this.Logger.debug(
 							`User ${id} has not sent a heartbeat in ${user.HeartbeatInterval + 10_000
 							}ms, closing connection (We got ${this.ConnectedUsers.size} users left)`,
 						);
-					}
 
 					user.Close(SoftCloseCodes.MissedHeartbeat, 'Missed Heartbeat', false);
-				} else if (process.env.debug) {
+				} else {
 					this.Logger.debug(
 						`User ${id} sent a heartbeat at ${new Date(user.LastHeartbeat).toLocaleString()}, which is ${Date.now() - user.LastHeartbeat
 						}ms ago`,

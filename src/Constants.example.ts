@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/prefer-math-trunc */
 /* eslint-disable sonarjs/no-identical-expressions */
 /* !
  *   ██╗  ██╗ █████╗ ███████╗████████╗███████╗██╗
@@ -10,6 +11,8 @@
  * GPL 3.0 Licensed
  */
 
+import process from 'node:process';
+
 const Settings = {
 	Max: {
 		GuildCount: 50,
@@ -19,13 +22,14 @@ const Settings = {
 		BanCount: Number.POSITIVE_INFINITY,
 		FriendCount: 100,
 		MemberCount: 500,
-		UsernameLength: 32,
 		// The max amount of usernames, lets say the name is "cat" there can be 9999 accounts then once we
 		// hit the max nobody can switch tags, So we limit to 5k so people can switch tags
 		UsernameCount: 5_000,
 		GuildNameLength: 100,
 		GuildDescriptionLength: 500,
-		GuildLimit: 100, // The amount they can request in the /guilds/fetch route
+		GuildFetchLimit: 100, // The amount they can request in the /guilds/fetch route
+		MessageLength: 1_000, // The max amount of characters in a message
+		MaxFileSize: 12 * 1_024 * 1_024, // 8MB
 	},
 	Min: {
 		UsernameLength: 2,
@@ -41,12 +45,41 @@ const Settings = {
 	},
 	DisallowedWords: {
 		// can be strings or regex (in arrays)
-		Username: [],
+		Username: [
+			// Blocking System so people can't use it (besides the system account itself)
+			'system',
+			'System',
+			'SYSTEM',
+		],
 		Guilds: [],
 		Channels: [],
-		Global: [],
+		Global: [
+			/\b(?:kastel|discord|kastelapp\.com|discordapp\.com)\b/gi, // Blocks Discord & Kastel Stuff (just so people don't try to use it)
+		],
 	},
 };
+
+// Note: You should NOT change these at all unless you know what you are doing
+// The frontend depends on these
+const GuildFeatures = [{
+	Name: 'Partnered',
+	Deprecated: false, // deprecated means it will be removed in the future
+	Default: false, // If servers are given this by default on guild creation
+	Settable: false, // if a user can set it themselves
+	NewDefault: false // If its a "new default" this means if we lets say fetch a guild we need to add this
+}, {
+	Name: 'Verified',
+	Deprecated: false,
+	Enabled: false,
+	Settable: false,
+	NewDefault: false
+}, {
+	Name: 'Official',
+	Deprecated: false,
+	Enabled: false,
+	Settable: false,
+	NewDefault: false
+}] as const;
 
 const AllowedMentions: {
 	All?: number;
@@ -64,23 +97,23 @@ const AllowedMentions: {
 AllowedMentions.All = AllowedMentions.Everyone | AllowedMentions.Here | AllowedMentions.Roles | AllowedMentions.Users;
 
 const GuildFlags = {
-	Verified: Math.trunc(1),
+	Verified: 1 << 0,
 	Partnered: 1 << 1,
 	Official: 1 << 2,
-	NoOwner: 1 << 10, // NoOwner is a rare flag, Should never be found in the wild (but it is possible)
+	NoOwner: 1 << 10,
 };
 
 const GuildMemberFlags = {
-	Left: Math.trunc(1), // If they left the guild
-	In: 1 << 1, // If they are in the guild
-	Kicked: 1 << 2, // If they were kicked from the guild
-	Banned: 1 << 3, // If they were banned from the guild
-	Owner: 1 << 4, // If they are the owner of the guild
-	CoOwner: 1 << 5, // If they are a co-owner of the guild (Pretty much the same as Owner but they can't delete the guild (or change the owner)))
+	Left: 1 << 0,
+	In: 1 << 1,
+	Kicked: 1 << 2,
+	Banned: 1 << 3,
+	Owner: 1 << 4,
+	CoOwner: 1 << 5,
 };
 
 const ChannelTypes = {
-	GuildCategory: Math.trunc(1),
+	GuildCategory: 1 << 0,
 	GuildText: 1 << 1,
 	GuildNews: 1 << 2,
 	GuildRules: 1 << 3,
@@ -91,10 +124,16 @@ const ChannelTypes = {
 };
 
 const Presence = {
-	Online: Math.trunc(1),
+	Online: 1 << 0,
 	Idle: 1 << 1,
 	Dnd: 1 << 2,
 	Offline: 1 << 3,
+};
+
+const MessageFlags = {
+	System: 1 << 0,
+	Normal: 1 << 1,
+	Reply: 1 << 2,
 };
 
 const Flags = {
@@ -122,10 +161,47 @@ const Flags = {
 	GroupchatBan: 1n << 35n,
 	WaitingOnAccountDeletion: 1n << 36n,
 	WaitingOnDisableDataUpdate: 1n << 37n,
+	AccountDeleted: 1n << 38n,
+	EmailVerified: 1n << 39n,
+	Disabled: 1n << 40n,
+	Terminated: 1n << 41n,
+	TwoFaEnabled: 1n << 42n,
+	TwoFaVerified: 1n << 43n,
+	// Temp Increased Values (Testing)
+	IncreasedGuildCount100: 1n << 80n,
+	IncreasedGuildCount200: 1n << 81n,
+	IncreasedGuildCount500: 1n << 82n,
+	IncreasedMessageLength2k: 1n << 83n,
+	IncreasedMessageLength4k: 1n << 84n,
+	IncreasedMessageLength8k: 1n << 85n,
 };
 
-// These are BigInts since BigInt Bitfields don't loop around to One after 32 (1 << 32 loops 1 but 1n << 32n goes to 4294967296n)
-const Permissions = {
+const PublicFlags: (keyof typeof Flags)[] = [
+	"StaffBadge",
+	"GhostBadge",
+	"SponsorBadge",
+	"DeveloperBadge",
+	"VerifiedBotDeveloperBadge",
+	"OriginalUserBadge",
+	"PartnerBadge",
+	"ModeratorBadge",
+	"MinorBugHunterBadge",
+	"IntermediateBugHunterBadge",
+	"MajorBugHunterBadge",
+	"VerifiedBot",
+	"Spammer"
+];
+
+const MixedPermissions = {
+	ManageMessages: 1n << 9n,
+	SendMessages: 1n << 10n,
+	ReadMessages: 1n << 11n,
+	CreateInvites: 1n << 14n,
+	BypassSlowmode: 1n << 16n,
+	ManageWebhooks: 1n << 19n,
+};
+
+const RolePermissions = {
 	Administrator: 1n << 0n,
 	ManageGuild: 1n << 1n,
 	ManageRoles: 1n << 2n,
@@ -135,26 +211,31 @@ const Permissions = {
 	ManageBans: 1n << 6n,
 	ManageNicknames: 1n << 7n,
 	ManageInvites: 1n << 8n,
-	ManageMessages: 1n << 9n,
-	SendMessages: 1n << 10n,
-	ReadMessages: 1n << 11n,
 	KickMembers: 1n << 12n,
 	BanMembers: 1n << 13n,
-	CreateInvites: 1n << 14n,
-	ViewChannel: 1n << 15n,
-	BypassSlowmode: 1n << 16n,
-	ManageChannel: 1n << 17n,
 	ChangeNickname: 1n << 18n,
-	ManageWebhooks: 1n << 19n,
 	ViewAuditLog: 1n << 20n,
+	AddBots: 1n << 21n,
+	ViewChannels: 1n << 22n,
+};
+
+const ChannelPermissions = {
+	ViewChannel: 1n << 15n,
+	ManageChannel: 1n << 17n,
+};
+
+const Permissions = {
+	...MixedPermissions,
+	...RolePermissions,
+	...ChannelPermissions,
 };
 
 const RelationshipFlags = {
-	Blocked: Math.trunc(1),
+	Blocked: 1 << 0,
 	FriendRequest: 1 << 1,
 	Friend: 1 << 2,
 	Denied: 1 << 3,
-	// MutualFriend: 1 << 4, // Actually this could be done client side
+	MutualFriend: 1 << 4,
 };
 
 const AuditLogActions = {};
@@ -162,6 +243,27 @@ const AuditLogActions = {};
 const Relative = {
 	Version: '0.0.1',
 };
+
+const VerificationFlags = {
+	VerifyEmail: 1 << 0,
+	ForgotPassword: 1 << 1,
+	ChangeEmail: 1 << 2,
+};
+
+const Snowflake = {
+	Epoch: 1_641_016_800_000,
+	ProcessId: process.pid,
+	ProcessIdBytes: 1,
+	SequenceBytes: 6,
+	WorkerId: 5,
+	WorkerIdBytes: 12,
+};
+
+const PermissionOverrideTypes = {
+	Role: 1 << 0,
+	Member: 1 << 1,
+	Everyone: 1 << 2
+}
 
 export default {
 	Settings,
@@ -175,6 +277,15 @@ export default {
 	AuditLogActions,
 	Relative,
 	GuildMemberFlags,
+	MessageFlags,
+	MixedPermissions,
+	RolePermissions,
+	ChannelPermissions,
+	VerificationFlags,
+	Snowflake,
+	PublicFlags,
+	GuildFeatures,
+	PermissionOverrideTypes
 };
 
 export {
@@ -189,4 +300,13 @@ export {
 	AuditLogActions,
 	Relative,
 	GuildMemberFlags,
+	MessageFlags,
+	MixedPermissions,
+	RolePermissions,
+	ChannelPermissions,
+	VerificationFlags,
+	Snowflake,
+	PublicFlags,
+	GuildFeatures,
+	PermissionOverrideTypes
 };

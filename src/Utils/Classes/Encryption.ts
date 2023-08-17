@@ -32,10 +32,10 @@ class Encryption {
 		}
 	}
 
-	public static Decrypt(data: string, raw = false): any {
+	public static Decrypt<T = any>(data: T, raw = false): T {
 		try {
 			const decipher = crypto.createDecipheriv(algorithm, securityKey, initVector);
-			const decrypted = decipher.update(data, 'hex', 'utf8') + decipher.final('utf8');
+			const decrypted = decipher.update(data as string, 'hex', 'utf8') + decipher.final('utf8');
 			const cleaned = Encryption.cleanData(decrypted);
 
 			if (raw) return cleaned;

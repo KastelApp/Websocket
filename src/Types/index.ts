@@ -9,8 +9,15 @@
  * GPL 3.0 Licensed
  */
 
-export interface Heh {
-    id: string
+import type FlagFields from "../Utils/Classes/BitFields/Flags";
+
+export interface WsUser {
+	Bot: boolean;
+	Email: string;
+	FlagsUtil: FlagFields;
+	Id: string;
+	Password: string;
+	Token: string;
 }
 
 declare module 'ws' {
