@@ -1,8 +1,9 @@
 import type { Buffer } from 'node:buffer';
 import { deflateSync } from 'node:zlib';
 import type WebSocket from 'ws';
+import { Flags } from '../../Constants.js';
 import type { WsUser } from '../../Types/index.js';
-import FlagFields from './BitFields/Flags.js';
+import FlagUtilsBInt from './Flags.js';
 import { HardCloseCodes } from './Utils.js';
 
 interface EventQueue {
@@ -52,7 +53,7 @@ class User {
 	public Ip: string;
 
 	public WsUser: WsUser;
-	
+
 	public constructor(id: string, ws: WebSocket.WebSocket, authed: boolean, ip: string) {
 		this.Id = id;
 
@@ -87,15 +88,17 @@ class User {
 		this.EventQueue = [];
 
 		this.Params = {};
-		
+
 		this.WsUser = {
 			Bot: false,
 			Email: '',
 			Token: '',
 			Password: '',
 			Id: '',
-			FlagsUtil: new FlagFields(0)
-		}
+			FlagsUtil: new FlagUtilsBInt<typeof Flags>(0n, Flags),
+			Channels: {},
+			Guilds: []
+		};
 	}
 
 	public Compress(data: any): Buffer | string {
@@ -133,7 +136,7 @@ class User {
 		if (seq) {
 			this.Seq++;
 		}
-		
+
 		const changedData = this.Compress({
 			...data,
 			// eslint-disable-next-line id-length

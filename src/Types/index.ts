@@ -9,15 +9,21 @@
  * GPL 3.0 Licensed
  */
 
-import type FlagFields from "../Utils/Classes/BitFields/Flags";
+import type { Flags } from "../Constants";
+import type { FlagUtilsBInt } from "../Utils/Classes/Flags";
 
 export interface WsUser {
 	Bot: boolean;
+	// the IDS not the objects
+	Channels: {
+		[key: string]: string[];
+	};
 	Email: string;
-	FlagsUtil: FlagFields;
+	FlagsUtil: FlagUtilsBInt<typeof Flags>;
+	Guilds: string[];
 	Id: string;
 	Password: string;
-	Token: string;
+	Token: string; // the IDS not the objects
 }
 
 declare module 'ws' {

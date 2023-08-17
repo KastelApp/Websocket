@@ -1,9 +1,10 @@
+import { Flags } from '../../Constants.js';
 import type IdentifyPayload from '../../Types/V1/Identify.js';
 import type { Channel, Guild, PermissionOverride, Role } from '../../Types/V1/Identify.js';
-import FlagFields from '../../Utils/Classes/BitFields/Flags.js';
 import Encryption from '../../Utils/Classes/Encryption.js';
 import WsError from '../../Utils/Classes/Errors.js';
 import Events from '../../Utils/Classes/Events.js';
+import FlagUtilsBInt from '../../Utils/Classes/Flags.js';
 import { OpCodes } from '../../Utils/Classes/OpCodes.js';
 import Token from '../../Utils/Classes/Token.js';
 import type User from '../../Utils/Classes/User.js';
@@ -104,7 +105,7 @@ export default class Identify extends Events {
 			return;
 		}
 
-		const UserFlags = new FlagFields(UserData.Flags);
+		const UserFlags = new FlagUtilsBInt<typeof Flags>(UserData.Flags, Flags);
 
 		if (
 			UserFlags.hasString('AccountDeleted') ||
@@ -173,6 +174,8 @@ export default class Identify extends Events {
 			Email: CompleteDecrypted.Email,
 			Id: CompleteDecrypted.UserId,
 			Password: CompleteDecrypted.Password,
+			Guilds: CompleteDecrypted.Guilds,
+			Channels: {}
 		};
 
 		const Payload: Partial<IdentifyPayload> = {
@@ -201,10 +204,15 @@ export default class Identify extends Events {
 			Guilds: await this.FetchGuilds(Encryption.CompleteDecryption(UserData.Guilds))
 		};
 
+		for (const Guild of (Payload.Guilds ?? [])) {
+			User.WsUser.Channels[Guild.Id] = Guild.Channels.map((channel) => channel.Id);
+		}
+
 		User.Authed = true;
 		User.LastHeartbeat = Date.now();
 		User.HeartbeatInterval = Utils.GenerateHeartbeatInterval();
-		
+		User.Compression = Data.Settings.Compress ?? false;
+
 		User.Send({
 			Op: OpCodes.Authed,
 			D: {
@@ -212,6 +220,8 @@ export default class Identify extends Events {
 				HeartbeatInterval: User.HeartbeatInterval,
 			}
 		}, false);
+
+		console.log(User.WsUser);
 	}
 
 	private EmptyStringToNull<T = any>(obj: T): T {
@@ -299,7 +309,7 @@ export default class Identify extends Events {
 			if (!Guild) continue;
 
 			const FixedRoles: Role[] = [];
-			
+
 			const FixedGuild: Guild = {
 				Id: Guild.GuildId,
 				Icon: Guild.Icon,
@@ -337,7 +347,7 @@ export default class Identify extends Events {
 				Roles: FixedRoles
 			});
 		}
-		
+
 		return Encryption.CompleteDecryption(BuildGuilds);
 	}
 }
