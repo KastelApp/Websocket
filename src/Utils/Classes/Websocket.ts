@@ -95,7 +95,7 @@ class Websocket {
 			AllowForDangerousCommands: true,
 		});
 
-		this.Cassandra = new Connection(Config.ScyllaDB.Nodes, Config.ScyllaDB.Username, Config.ScyllaDB.Password, Config.ScyllaDB.Keyspace);
+		this.Cassandra = new Connection(Config.ScyllaDB.Nodes, Config.ScyllaDB.Username, Config.ScyllaDB.Password, Config.ScyllaDB.Keyspace, Config.ScyllaDB.NetworkTopologyStrategy, Config.ScyllaDB.DurableWrites, Config.ScyllaDB.CassandraOptions);
 	}
 
 	public async Start() {
@@ -124,13 +124,17 @@ class Websocket {
 		this.wss.MaxPerIp = Number.POSITIVE_INFINITY;
 		this.wss.MaxConnectionsPerMinute = Number.POSITIVE_INFINITY;
 
+		this.Logger.info('Connecting to ScyllaDB');
+		this.Logger.warn('IT IS NOT FROZEN, ScyllaDB may take a while to connect')
+		
 		await Promise.all([
 			this.Cassandra.Connect(),
 			this.Cache.connect(),
 		]);
 
 		this.Logger.info('Creating ScyllaDB Tables.. This may take a while..');
-
+		this.Logger.warn('IT IS NOT FROZEN, ScyllaDB may take a while to create the tables')
+		
 		const TablesCreated = await this.Cassandra.CreateTables();
 
 		if (TablesCreated) {
