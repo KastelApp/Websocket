@@ -191,7 +191,7 @@ export default class Identify extends Events {
 				TwoFaEnabled: UserFlags.hasString('TwoFaEnabled'),
 				TwoFaVerified: UserFlags.hasString('TwoFaVerified'),
 				Username: CompleteDecrypted.Username,
-				Bio: Encryption.Decrypt(UsersSettings.Bio),
+				Bio: Encryption.isEncrypted(UsersSettings.Bio) ? Encryption.Decrypt(UsersSettings.Bio) : UsersSettings.Bio,
 			},
 			Settings: {
 				Language: UsersSettings.Language,
@@ -201,7 +201,7 @@ export default class Identify extends Events {
 				Theme: UsersSettings.Theme,
 			},
 			Mentions: UsersSettings.Mentions ?? [],
-			Guilds: await this.FetchGuilds(Encryption.CompleteDecryption(UserData.Guilds), CompleteDecrypted),
+			Guilds: await this.FetchGuilds(Encryption.CompleteDecryption(UserData.Guilds ?? []), CompleteDecrypted),
 			HeartbeatInterval: Utils.GenerateHeartbeatInterval(),
 			SessionId: User.Id
 		};
