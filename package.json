@@ -6,7 +6,7 @@
 	"dependencies": {
 		"@kastelll/cassandra-driver": "^4.6.15",
 		"@kastelll/util": "0.2.2",
-		"@sentry/node": "^7.61.1",
+		"@sentry/node": "^7.71.0",
 		"archiver": "^5.3.1",
 		"copyfiles": "^2.4.1",
 		"express": "^4.18.2",
