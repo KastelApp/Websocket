@@ -1,10 +1,10 @@
 import type { Buffer } from 'node:buffer';
 import { deflateSync } from 'node:zlib';
-import type WebSocket from 'ws';
-import { Flags } from '../../Constants.js';
-import type { WsUser } from '../../Types/index.js';
-import FlagUtilsBInt from './Flags.js';
-import { HardCloseCodes } from './Utils.js';
+import type { ServerWebSocket } from 'bun';
+import { Flags } from '../../Constants.ts';
+import type { WsUser } from '../../Types/index.ts';
+import FlagUtilsBInt from './Flags.ts';
+import { HardCloseCodes } from './Utils.ts';
 
 interface EventQueue {
 	E: {
@@ -18,7 +18,12 @@ interface EventQueue {
 class User {
 	public Id: string;
 
-	public Ws: WebSocket.WebSocket;
+	public Ws: ServerWebSocket<{
+		headers: Headers;
+		sessionId: string;
+		url: string;
+		user: User | null;
+	}>;
 
 	public Authed: boolean;
 
@@ -54,7 +59,17 @@ class User {
 
 	public WsUser: WsUser;
 
-	public constructor(id: string, ws: WebSocket.WebSocket, authed: boolean, ip: string) {
+	public constructor(
+		id: string,
+		ws: ServerWebSocket<{
+			headers: Headers;
+			sessionId: string;
+			url: string;
+			user: User | null;
+		}>,
+		authed: boolean,
+		ip: string,
+	) {
 		this.Id = id;
 
 		this.Ws = ws;
@@ -97,7 +112,7 @@ class User {
 			Id: '',
 			FlagsUtil: new FlagUtilsBInt<typeof Flags>(0n, Flags),
 			Channels: {},
-			Guilds: []
+			Guilds: [],
 		};
 	}
 
@@ -152,7 +167,8 @@ class User {
 				return; // Its already closed, why are you trying to close it again?
 			}
 
-			if (soft) { // soft is when the connection is already terminated
+			if (soft) {
+				// soft is when the connection is already terminated
 				this.Closed = true;
 				this.ClosedAt = Date.now();
 				this.ClosedCode = code;

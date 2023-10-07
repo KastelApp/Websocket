@@ -9,7 +9,7 @@
  * GPL 3.0 Licensed
  */
 
-import { MongoDB } from '../Config.js';
+import { MongoDB } from '../Config.ts';
 
 const uriGenerator = (): string => {
 	const { Uri, User, Host, Port, Password, Database, AuthSource } = MongoDB;

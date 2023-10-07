@@ -19,7 +19,7 @@ const Settings = {
 		ChannelCount: 250,
 		RoleCount: 250,
 		InviteCount: 500,
-		BanCount: Number.POSITIVE_INFINITY,
+		BanCount: 5_000, // ikik, 5k bans isn't much but its only temp, Nobody should hit this limit in beta
 		FriendCount: 100,
 		MemberCount: 500,
 		// The max amount of usernames, lets say the name is "cat" there can be 9999 accounts then once we
@@ -31,10 +31,7 @@ const Settings = {
 		MessageLength: 1_000, // The max amount of characters in a message
 		MaxFileSize: 12 * 1_024 * 1_024, // 8MB
 	},
-	Min: {
-		UsernameLength: 2,
-		GuildNameLength: 2,
-	},
+	Min: {},
 	Captcha: {
 		// The routes that have captcha (If you want them to have captcha)
 		Login: false,
@@ -43,43 +40,33 @@ const Settings = {
 		ChangePassword: false,
 		ChangeEmail: false,
 	},
-	DisallowedWords: {
-		// can be strings or regex (in arrays)
-		Username: [
-			// Blocking System so people can't use it (besides the system account itself)
-			'system',
-			'System',
-			'SYSTEM',
-		],
-		Guilds: [],
-		Channels: [],
-		Global: [
-			/\b(?:kastel|discord|kastelapp\.com|discordapp\.com)\b/gi, // Blocks Discord & Kastel Stuff (just so people don't try to use it)
-		],
-	},
 };
 
 // Note: You should NOT change these at all unless you know what you are doing
 // The frontend depends on these
-const GuildFeatures = [{
-	Name: 'Partnered',
-	Deprecated: false, // deprecated means it will be removed in the future
-	Default: false, // If servers are given this by default on guild creation
-	Settable: false, // if a user can set it themselves
-	NewDefault: false // If its a "new default" this means if we lets say fetch a guild we need to add this
-}, {
-	Name: 'Verified',
-	Deprecated: false,
-	Enabled: false,
-	Settable: false,
-	NewDefault: false
-}, {
-	Name: 'Official',
-	Deprecated: false,
-	Enabled: false,
-	Settable: false,
-	NewDefault: false
-}] as const;
+const GuildFeatures = [
+	{
+		Name: 'Partnered',
+		Deprecated: false, // deprecated means it will be removed in the future
+		Default: false, // If servers are given this by default on guild creation
+		Settable: false, // if a user can set it themselves
+		NewDefault: false, // If its a "new default" this means if we lets say fetch a guild we need to add this
+	},
+	{
+		Name: 'Verified',
+		Deprecated: false,
+		Enabled: false,
+		Settable: false,
+		NewDefault: false,
+	},
+	{
+		Name: 'Official',
+		Deprecated: false,
+		Enabled: false,
+		Settable: false,
+		NewDefault: false,
+	},
+] as const;
 
 const AllowedMentions: {
 	All?: number;
@@ -95,13 +82,6 @@ const AllowedMentions: {
 };
 
 AllowedMentions.All = AllowedMentions.Everyone | AllowedMentions.Here | AllowedMentions.Roles | AllowedMentions.Users;
-
-const GuildFlags = {
-	Verified: 1 << 0,
-	Partnered: 1 << 1,
-	Official: 1 << 2,
-	NoOwner: 1 << 10,
-};
 
 const GuildMemberFlags = {
 	Left: 1 << 0,
@@ -134,6 +114,8 @@ const MessageFlags = {
 	System: 1 << 0,
 	Normal: 1 << 1,
 	Reply: 1 << 2,
+	Deleted: 1 << 3, // NOTE: this is only used when the message has the reported flag
+	Reported: 1 << 4, // Note: this is private to the users (they won't receive the flag)
 };
 
 const Flags = {
@@ -177,19 +159,19 @@ const Flags = {
 };
 
 const PublicFlags: (keyof typeof Flags)[] = [
-	"StaffBadge",
-	"GhostBadge",
-	"SponsorBadge",
-	"DeveloperBadge",
-	"VerifiedBotDeveloperBadge",
-	"OriginalUserBadge",
-	"PartnerBadge",
-	"ModeratorBadge",
-	"MinorBugHunterBadge",
-	"IntermediateBugHunterBadge",
-	"MajorBugHunterBadge",
-	"VerifiedBot",
-	"Spammer"
+	'StaffBadge',
+	'GhostBadge',
+	'SponsorBadge',
+	'DeveloperBadge',
+	'VerifiedBotDeveloperBadge',
+	'OriginalUserBadge',
+	'PartnerBadge',
+	'ModeratorBadge',
+	'MinorBugHunterBadge',
+	'IntermediateBugHunterBadge',
+	'MajorBugHunterBadge',
+	'VerifiedBot',
+	'Spammer',
 ];
 
 const MixedPermissions = {
@@ -231,11 +213,12 @@ const Permissions = {
 };
 
 const RelationshipFlags = {
-	Blocked: 1 << 0,
-	FriendRequest: 1 << 1,
-	Friend: 1 << 2,
-	Denied: 1 << 3,
-	MutualFriend: 1 << 4,
+	None: 1 << 0,
+	Blocked: 1 << 1,
+	FriendRequest: 1 << 2,
+	Friend: 1 << 3,
+	Denied: 1 << 4,
+	MutualFriend: 1 << 5,
 };
 
 const AuditLogActions = {};
@@ -251,24 +234,23 @@ const VerificationFlags = {
 };
 
 const Snowflake = {
-	Epoch: 1_641_016_800_000,
-	ProcessId: process.pid,
-	ProcessIdBytes: 1,
+	Epoch: 1_641_016_800_000n,
 	SequenceBytes: 6,
-	WorkerId: 5,
 	WorkerIdBytes: 12,
+	ProcessIdBytes: 1,
+	WorkerId: 5,
+	ProcessId: process.pid,
 };
 
 const PermissionOverrideTypes = {
 	Role: 1 << 0,
 	Member: 1 << 1,
-	Everyone: 1 << 2
-}
+	Everyone: 1 << 2,
+};
 
 export default {
 	Settings,
 	AllowedMentions,
-	GuildFlags,
 	ChannelTypes,
 	Presence,
 	Flags,
@@ -285,13 +267,12 @@ export default {
 	Snowflake,
 	PublicFlags,
 	GuildFeatures,
-	PermissionOverrideTypes
+	PermissionOverrideTypes,
 };
 
 export {
 	Settings,
 	AllowedMentions,
-	GuildFlags,
 	ChannelTypes,
 	Presence,
 	Flags,
@@ -308,5 +289,5 @@ export {
 	Snowflake,
 	PublicFlags,
 	GuildFeatures,
-	PermissionOverrideTypes
+	PermissionOverrideTypes,
 };

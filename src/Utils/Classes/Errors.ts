@@ -1,43 +1,48 @@
 class WsError {
+	public Op: number;
 
-	public Op: number
-	
 	public D: {
-        Errors: {
+		Errors: {
 			[key: string]: any;
-		}
-    };
+		};
+	};
 
 	public constructor(OpCode: number) {
 		this.Op = OpCode;
 
 		this.D = {
-			Errors: {}
+			Errors: {},
 		};
 	}
-	
-	public AddToError(ErrorName: string, ErrorData: {
-		Code: number | string;
-		Message: string;
-	}) {
+
+	public AddToError(
+		ErrorName: string,
+		ErrorData: {
+			Code: number | string;
+			Message: string;
+		},
+	) {
 		this.D.Errors[ErrorName] = ErrorData;
 	}
-	
+
 	public AddError(ErrorData: {
 		[key: string]: {
 			Code: number | string;
 			Message: string;
-		}
+		};
 	}) {
 		for (const [key, value] of Object.entries(ErrorData)) {
 			this.D.Errors[key] = value;
 		}
-	  }
-	
-	public AddArrayError(ErrorName: string, ErrorData: {
-		Code: number | string;
-		Message: string;
-	}[]) {
+	}
+
+	public AddArrayError(
+		ErrorName: string,
+		ErrorData: {
+			Code: number | string;
+			Message: string;
+		}[],
+	) {
 		/*
 		{
 			"ErrorName": {
@@ -49,19 +54,19 @@ class WsError {
 		}
 		 */
 		this.D.Errors[ErrorName] = {};
-		
+
 		for (const [index, error] of ErrorData.entries()) {
 			this.D.Errors[ErrorName][index] = error;
 		}
 	}
-	
+
 	public toJSON() {
 		return {
 			Op: this.Op,
-			D: this.D
-		}
+			D: this.D,
+		};
 	}
-	
+
 	public toString() {
 		return JSON.stringify(this.toJSON());
 	}

@@ -1,7 +1,7 @@
-import Events from '../../../Utils/Classes/Events.js';
-import { OpCodes } from '../../../Utils/Classes/OpCodes.js';
-import type User from '../../../Utils/Classes/User.js';
-import type Websocket from '../../../Utils/Classes/Websocket.js';
+import Events from '../../../Utils/Classes/Events.ts';
+import { OpCodes } from '../../../Utils/Classes/OpCodes.ts';
+import type User from '../../../Utils/Classes/User.ts';
+import type Websocket from '../../../Utils/Classes/Websocket.ts';
 
 export default class RequestGuild extends Events {
 	public Websocket: Websocket;
@@ -22,5 +22,5 @@ export default class RequestGuild extends Events {
 		this.Version = 1;
 	}
 
-	public override async Execute(user: User, data: {}) { }
+	public override async Execute(user: User, data: {}) {}
 }

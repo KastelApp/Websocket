@@ -1,5 +1,5 @@
-import type User from './User.js';
-import { AuthCodes } from './Utils.js';
+import type User from './User.ts';
+import { AuthCodes } from './Utils.ts';
 
 class Events {
 	public Name: string;

@@ -9,8 +9,8 @@
  * GPL 3.0 Licensed
  */
 
-import type { Flags } from "../Constants";
-import type { FlagUtilsBInt } from "../Utils/Classes/Flags";
+import type { Flags } from '../Constants';
+import type { FlagUtilsBInt } from '../Utils/Classes/Flags';
 
 export interface WsUser {
 	Bot: boolean;
@@ -24,10 +24,4 @@ export interface WsUser {
 	Id: string;
 	Password: string;
 	Token: string; // the IDS not the objects
-}
-
-declare module 'ws' {
-	export interface WebSocket {
-		id: string;
-	}
 }

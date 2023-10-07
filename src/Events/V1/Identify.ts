@@ -1,16 +1,16 @@
-import { Flags } from '../../Constants.js';
-import type IdentifyPayload from '../../Types/V1/Identify.js';
-import type { Channel, Guild, PermissionOverride, Role } from '../../Types/V1/Identify.js';
-import Encryption from '../../Utils/Classes/Encryption.js';
-import WsError from '../../Utils/Classes/Errors.js';
-import Events from '../../Utils/Classes/Events.js';
-import FlagUtilsBInt from '../../Utils/Classes/Flags.js';
-import { OpCodes } from '../../Utils/Classes/OpCodes.js';
-import Token from '../../Utils/Classes/Token.js';
-import type User from '../../Utils/Classes/User.js';
-import Utils, { AuthCodes, HardCloseCodes, HardOpCodes } from '../../Utils/Classes/Utils.js';
-import type Websocket from '../../Utils/Classes/Websocket.js';
-import type { User as UserType } from '../../Utils/Cql/Types/index.js';
+import { Flags } from '../../Constants.ts';
+import type IdentifyPayload from '../../Types/V1/Identify.ts';
+import type { Channel, Guild, PermissionOverride, Role } from '../../Types/V1/Identify.ts';
+import Encryption from '../../Utils/Classes/Encryption.ts';
+import WsError from '../../Utils/Classes/Errors.ts';
+import Events from '../../Utils/Classes/Events.ts';
+import FlagUtilsBInt from '../../Utils/Classes/Flags.ts';
+import { OpCodes } from '../../Utils/Classes/OpCodes.ts';
+import Token from '../../Utils/Classes/Token.ts';
+import type User from '../../Utils/Classes/User.ts';
+import Utils, { AuthCodes, HardCloseCodes } from '../../Utils/Classes/Utils.ts';
+import type Websocket from '../../Utils/Classes/Websocket.ts';
+import type { User as UserType } from '../../Utils/Cql/Types/index.ts';
 
 export default class Identify extends Events {
 	public Websocket: Websocket;
@@ -42,15 +42,16 @@ export default class Identify extends Events {
 			Token: string;
 		},
 	) {
-		const FailedToAuth = new WsError(HardOpCodes.Error);
+		const FailedToAuth = new WsError(OpCodes.Error);
 
-		if (!Data.Token || User.Authed) { // lazy way to check if the user is already authed
+		if (!Data.Token || User.Authed) {
+			// lazy way to check if the user is already authed
 
 			FailedToAuth.AddError({
 				Token: {
 					Code: 'InvalidToken',
-					Message: 'The token you provided was invalid.'
-				}
+					Message: 'The token you provided was invalid.',
+				},
 			});
 
 			User.Send(FailedToAuth);
@@ -62,12 +63,11 @@ export default class Identify extends Events {
 		const ValidatedToken = Token.ValidateToken(Data.Token);
 
 		if (!ValidatedToken) {
-
 			FailedToAuth.AddError({
 				Token: {
 					Code: 'InvalidToken',
-					Message: 'The token you provided was invalid.'
-				}
+					Message: 'The token you provided was invalid.',
+				},
 			});
 
 			User.Send(FailedToAuth);
@@ -78,25 +78,28 @@ export default class Identify extends Events {
 
 		const DecodedToken = Token.DecodeToken(Data.Token);
 
-		const UsersSettings = await this.Websocket.Cassandra.Models.Settings.get({
-			UserId: Encryption.Encrypt(DecodedToken.Snowflake),
-		}, {
-			fields: ['bio', 'language', 'mentions', 'presence', 'privacy', 'status', 'theme', 'tokens']
-		});
+		const UsersSettings = await this.Websocket.Cassandra.Models.Settings.get(
+			{
+				UserId: Encryption.Encrypt(DecodedToken.Snowflake),
+			},
+			{
+				fields: ['bio', 'language', 'mentions', 'presence', 'privacy', 'status', 'theme', 'tokens'],
+			},
+		);
 
 		const UserData = await this.Websocket.Cassandra.Models.User.get({
 			UserId: Encryption.Encrypt(DecodedToken.Snowflake),
 		});
 
 		if (!UsersSettings || !UserData) {
-			this.Websocket.Logger.debug("User settings wasn't found", (DecodedToken.Snowflake));
+			this.Websocket.Logger.debug("User settings wasn't found", DecodedToken.Snowflake);
 			this.Websocket.Logger.debug(UserData, UsersSettings);
 
 			FailedToAuth.AddError({
 				Token: {
 					Code: 'InvalidToken',
-					Message: 'The token you provided was invalid.'
-				}
+					Message: 'The token you provided was invalid.',
+				},
 			});
 
 			User.Send(FailedToAuth);
@@ -112,7 +115,6 @@ export default class Identify extends Events {
 			UserFlags.hasString('WaitingOnDisableDataUpdate') ||
 			UserFlags.hasString('WaitingOnAccountDeletion')
 		) {
-
 			this.Websocket.Logger.debug('Account Is Deleted or about to be deleted');
 
 			FailedToAuth.AddError({
@@ -129,7 +131,6 @@ export default class Identify extends Events {
 		}
 
 		if (UserFlags.hasString('Terminated') || UserFlags.hasString('Disabled')) {
-
 			this.Websocket.Logger.debug('Account Is Disabled or Terminated');
 
 			FailedToAuth.AddError({
@@ -146,14 +147,13 @@ export default class Identify extends Events {
 		}
 
 		if (UserFlags.hasOneArrayString(['Bot', 'VerifiedBot']) && User.AuthType !== AuthCodes.Bot) {
-
 			this.Websocket.Logger.debug('Account Is a Bot but not authenticated as a bot');
 
 			FailedToAuth.AddError({
 				Token: {
 					Code: 'InvalidToken',
-					Message: 'The token you provided was invalid.'
-				}
+					Message: 'The token you provided was invalid.',
+				},
 			});
 
 			User.Send(FailedToAuth);
@@ -164,7 +164,7 @@ export default class Identify extends Events {
 
 		const CompleteDecrypted: UserType = Encryption.CompleteDecryption({
 			...UserData,
-			Flags: UserData.Flags.toString()
+			Flags: UserData.Flags.toString(),
 		});
 
 		User.WsUser = {
@@ -175,7 +175,7 @@ export default class Identify extends Events {
 			Id: CompleteDecrypted.UserId,
 			Password: CompleteDecrypted.Password,
 			Guilds: CompleteDecrypted.Guilds,
-			Channels: {}
+			Channels: {},
 		};
 
 		const Payload: Partial<IdentifyPayload> = {
@@ -191,7 +191,7 @@ export default class Identify extends Events {
 				TwoFaEnabled: UserFlags.hasString('TwoFaEnabled'),
 				TwoFaVerified: UserFlags.hasString('TwoFaVerified'),
 				Username: CompleteDecrypted.Username,
-				Bio: Encryption.Decrypt(UsersSettings.Bio),
+				Bio: Encryption.isEncrypted(UsersSettings.Bio) ? Encryption.Decrypt(UsersSettings.Bio) : UsersSettings.Bio,
 			},
 			Settings: {
 				Language: UsersSettings.Language,
@@ -201,25 +201,38 @@ export default class Identify extends Events {
 				Theme: UsersSettings.Theme,
 			},
 			Mentions: UsersSettings.Mentions ?? [],
-			Guilds: await this.FetchGuilds(Encryption.CompleteDecryption(UserData.Guilds))
+			Guilds: await this.FetchGuilds(Encryption.CompleteDecryption(UserData.Guilds ?? []), CompleteDecrypted),
+			HeartbeatInterval: Utils.GenerateHeartbeatInterval(),
+			SessionId: User.Id,
 		};
 
-		for (const Guild of (Payload.Guilds ?? [])) {
-			User.WsUser.Channels[Guild.Id] = Guild.Channels.map((channel) => channel.Id);
+		for (const Guild of Payload.Guilds ?? []) {
+			User.WsUser.Channels[Guild.Id] = Guild.Channels.map((channel) => {
+				User.Ws.subscribe(`Channel:${channel.Id}`);
+
+				return channel.Id;
+			});
+
+			User.Ws.subscribe(`Guild:${Guild.Id}`);
 		}
 
 		User.Authed = true;
 		User.LastHeartbeat = Date.now();
-		User.HeartbeatInterval = Utils.GenerateHeartbeatInterval();
+		User.HeartbeatInterval = Payload.HeartbeatInterval as number;
 		User.Compression = Data.Settings.Compress ?? false;
 
-		User.Send({
-			Op: OpCodes.Authed,
-			D: {
-				...this.EmptyStringToNull(Payload),
-				HeartbeatInterval: User.HeartbeatInterval,
-			}
-		}, false);
+		User.Ws.subscribe(`User:${CompleteDecrypted.UserId}`); // subscribe to yourself so we can easily broadcast to yourself when we receive a system socket message
+
+		User.Send(
+			{
+				Op: OpCodes.Authed,
+				D: {
+					...this.EmptyStringToNull(Payload),
+					HeartbeatInterval: User.HeartbeatInterval,
+				},
+			},
+			false,
+		);
 	}
 
 	private EmptyStringToNull<T = any>(obj: T): T {
@@ -240,7 +253,6 @@ export default class Identify extends Events {
 				} else {
 					newObject[key] = value === '' ? null : value;
 				}
-
 			}
 
 			return newObject;
@@ -255,15 +267,15 @@ export default class Identify extends Events {
 		const FixedChannels: Channel[] = [];
 
 		const Channels = await this.Websocket.Cassandra.Models.Channel.find({
-			GuildId: Encryption.Encrypt(GuildId)
+			GuildId: Encryption.Encrypt(GuildId),
 		});
 
 		for (const Channel of Channels.toArray()) {
 			const PermissionOverrides: PermissionOverride[] = [];
 
-			for (const PermissionOverrideId of (Channel.PermissionsOverrides ?? [])) {
+			for (const PermissionOverrideId of Channel.PermissionsOverrides ?? []) {
 				const Override = await this.Websocket.Cassandra.Models.PermissionOverride.get({
-					PermissionId: PermissionOverrideId
+					PermissionId: PermissionOverrideId,
 				});
 
 				if (!Override) continue;
@@ -281,7 +293,7 @@ export default class Identify extends Events {
 			FixedChannels.push({
 				Id: Channel.ChannelId,
 				Name: Channel.Name,
-				AllowedMenions: Channel.AllowedMentions,
+				AllowedMentions: Channel.AllowedMentions,
 				Children: Channel.Children ?? [],
 				Description: Channel.Description,
 				Nsfw: Channel.Nsfw,
@@ -289,22 +301,30 @@ export default class Identify extends Events {
 				PermissionsOverrides: PermissionOverrides,
 				Position: Channel.Position,
 				Slowmode: Channel.Slowmode,
-				Type: Channel.Type
+				Type: Channel.Type,
 			});
 		}
 
 		return Encryption.CompleteDecryption(FixedChannels);
 	}
 
-	private async FetchGuilds(Guilds: string[]): Promise<Guild[]> {
+	private async FetchGuilds(Guilds: string[], User: UserType): Promise<Guild[]> {
 		const BuildGuilds = [];
 
 		for (const GuildId of Guilds) {
 			const Guild = await this.Websocket.Cassandra.Models.Guild.get({
-				GuildId: Encryption.Encrypt(GuildId)
+				GuildId: Encryption.Encrypt(GuildId),
 			});
 
-			if (!Guild) continue;
+			const Member = await this.Websocket.Cassandra.Models.GuildMember.get(
+				{
+					UserId: Encryption.Encrypt(User.UserId),
+					GuildId: Encryption.Encrypt(GuildId),
+				},
+				{ allowFiltering: true },
+			);
+
+			if (!Guild || !Member) continue;
 
 			const FixedRoles: Role[] = [];
 
@@ -314,16 +334,32 @@ export default class Identify extends Events {
 				CoOwners: Guild.CoOwners ?? [],
 				Features: Guild.Features ?? [],
 				Description: Guild.Description,
-				Channels: await this.FetchChannels(GuildId) as Channel[],
+				Channels: (await this.FetchChannels(GuildId)) as Channel[],
 				Flags: Guild.Flags,
 				MaxMembers: Guild.MaxMembers,
 				Name: Guild.Name,
 				OwnerId: Guild.OwnerId,
 				Roles: [],
+				Members: [
+					{
+						User: {
+							Id: User.UserId,
+							Avatar: User.Avatar,
+							Username: User.Username,
+							Tag: User.Tag,
+							GlobalNickname: User.GlobalNickname,
+							Flags: User.Flags,
+						},
+						JoinedAt: Member.JoinedAt,
+						Nickname: Member.Nickname,
+						Roles: Member.Roles ?? [],
+						Owner: Encryption.Decrypt(Guild.OwnerId) === User.UserId,
+					},
+				],
 			};
 
 			const Roles = await this.Websocket.Cassandra.Models.Role.find({
-				GuildId: Encryption.Encrypt(GuildId)
+				GuildId: Encryption.Encrypt(GuildId),
 			});
 
 			for (const Role of Roles.toArray()) {
@@ -336,13 +372,13 @@ export default class Identify extends Events {
 					Deleteable: Role.Deleteable,
 					Hoisted: Role.Hoisted,
 					Permissions: Role.Permissions.toString(),
-					Position: Role.Position
+					Position: Role.Position,
 				});
 			}
 
 			BuildGuilds.push({
 				...FixedGuild,
-				Roles: FixedRoles
+				Roles: FixedRoles,
 			});
 		}
 
