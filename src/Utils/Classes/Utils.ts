@@ -1,6 +1,5 @@
-/* eslint-disable unicorn/prefer-math-trunc */
 import crypto from 'node:crypto';
-import { parse } from 'node:url';
+import { URL } from 'node:url';
 
 const HardCloseCodes = {
 	UnknownError: 4_000, // Unknown error
@@ -117,12 +116,12 @@ class Utils {
 	}
 
 	public static getStuff<T = { type: string; query: Record<string, string> }>(url: string): T {
-		const myURL = parse(url);
+		const myURL = new URL(url);
 		const type = myURL.pathname?.replace('/', '') ?? 'unknown';
 
 		return {
 			type,
-			query: Object.fromEntries(new URLSearchParams(myURL.query ?? "").entries()),
+			query: Object.fromEntries(myURL.searchParams.entries()),
 		} as T;
 	}
 }

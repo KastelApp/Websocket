@@ -1,3 +1,4 @@
+import process from 'node:process';
 import { Relative } from './Constants.ts';
 import { Websocket } from './Utils/Classes/Websocket.ts';
 
@@ -18,5 +19,3 @@ try {
 
 	process.exit(1);
 }
-
-Bun.version
