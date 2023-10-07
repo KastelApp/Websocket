@@ -18,18 +18,18 @@ import { URL } from 'node:url';
 // import { AuthCodes, WebsocketServer, type User, WsUtils, Events as EventsBuilder, EventsHandler } from '@kastelll/core';
 import { CacheManager } from '@kastelll/util';
 import { type SimpleGit, simpleGit } from 'simple-git';
-import Config, { Server, Redis } from '../../Config.js';
-import Constants from '../../Constants.js';
-import ProcessArgs from '../ProcessArgs.js';
-import Connection from './Connection.js';
-import { Events as EventBuilder } from './Events.js';
-import EventsHandler from './EventsHandler.js';
-import Logger from './Logger.js';
-import { OpCodes } from './OpCodes.js';
-import SystemInfo from './SystemInfo.js';
-import type User from './User.js';
-import { AuthCodes, WsUtils } from './Utils.js';
-import WebsocketServer from './WS.js';
+import Config, { Server, Redis } from '../../Config.ts';
+import Constants from '../../Constants.ts';
+import ProcessArgs from '../ProcessArgs.ts';
+import Connection from './Connection.ts';
+import { Events as EventBuilder } from './Events.ts';
+import EventsHandler from './EventsHandler.ts';
+import Logger from './Logger.ts';
+import { OpCodes } from './OpCodes.ts';
+import SystemInfo from './SystemInfo.ts';
+import type User from './User.ts';
+import { AuthCodes, WsUtils } from './Utils.ts';
+import WebsocketServer from './WS.ts';
 
 type GitType = 'Added' | 'Copied' | 'Deleted' | 'Ignored' | 'Modified' | 'None' | 'Renamed' | 'Unmerged' | 'Untracked';
 
@@ -116,6 +116,7 @@ class Websocket {
 		this.Cassandra.on('Connected', () => this.Logger.info('Connected to ScyllaDB'));
 		this.Cassandra.on('Error', (err) => {
 			this.Logger.fatal(err);
+			console.error(err);
 
 			process.exit(1);
 		});
@@ -125,16 +126,16 @@ class Websocket {
 		this.wss.MaxConnectionsPerMinute = Number.POSITIVE_INFINITY;
 
 		this.Logger.info('Connecting to ScyllaDB');
-		this.Logger.warn('IT IS NOT FROZEN, ScyllaDB may take a while to connect')
-		
+		this.Logger.warn('IT IS NOT FROZEN, ScyllaDB may take a while to connect');
+
 		await Promise.all([
 			this.Cassandra.Connect(),
 			this.Cache.connect(),
 		]);
 
 		this.Logger.info('Creating ScyllaDB Tables.. This may take a while..');
-		this.Logger.warn('IT IS NOT FROZEN, ScyllaDB may take a while to create the tables')
-		
+		this.Logger.warn('IT IS NOT FROZEN, ScyllaDB may take a while to create the tables');
+
 		const TablesCreated = await this.Cassandra.CreateTables();
 
 		if (TablesCreated) {
@@ -169,7 +170,7 @@ class Websocket {
 				return;
 			}
 
-			if (user.SocketVersion !== 0) {
+			if (user.SocketVersion !== 0) {				
 				user.Close(4_000, 'Invalid socket version', false);
 
 				return;
@@ -237,8 +238,8 @@ class Websocket {
 		const Events = await this.WalkDirectory(this.EventsDirectory);
 
 		for (const Event of Events) {
-			if (!Event.endsWith('.js')) {
-				this.Logger.debug(`Skipping ${Event} as it is not a .js file`);
+			if (!Event.endsWith('.ts')) {
+				this.Logger.debug(`Skipping ${Event} as it is not a .ts file`);
 
 				continue;
 			}
@@ -296,7 +297,7 @@ class Websocket {
 			`Kastel Debug Logs`,
 			'='.repeat(40),
 			`Gateway Version: ${this.Constants.Relative.Version}`,
-			`Node Version: ${process.version}`,
+			`Bun Version: ${Bun.version}`,
 			'='.repeat(40),
 			`System Info:`,
 			`OS: ${System.OperatingSystem.Platform}`,

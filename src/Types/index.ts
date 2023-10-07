@@ -25,9 +25,3 @@ export interface WsUser {
 	Password: string;
 	Token: string; // the IDS not the objects
 }
-
-declare module 'ws' {
-	export interface WebSocket {
-		id: string;
-	}
-}

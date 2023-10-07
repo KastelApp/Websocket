@@ -28,15 +28,17 @@ const Redis: RedisConfigType = {
 };
 
 const ScyllaDB: ScyllaDBConfigType = {
-	Nodes: ['localhost'],
+	Nodes: ["localhost"],
 	Keyspace: 'kastel',
 	Username: 'kstl',
-	Password: 'utuxkgREbd6d7UiaXAZ3Ljs2h',
-	CassandraOptions: {}
+	Password: '',
+	CassandraOptions: {},
+	DurableWrites: true,
+	NetworkTopologyStrategy: {}
 };
 
 const Encryption: EncrpytionConfigType = {
-	Algorithm: '',
+	Algorithm: 'aes-256-cbc',
 	InitVector: '',
 	SecurityKey: '',
 	TokenKey: '',

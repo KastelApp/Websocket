@@ -1,9 +1,9 @@
-import WsError from '../../Utils/Classes/Errors.js';
-import Events from '../../Utils/Classes/Events.js';
-import { OpCodes } from '../../Utils/Classes/OpCodes.js';
-import type User from '../../Utils/Classes/User.js';
-import { HardCloseCodes } from '../../Utils/Classes/Utils.js';
-import type Websocket from '../../Utils/Classes/Websocket.js';
+import WsError from '../../Utils/Classes/Errors.ts';
+import Events from '../../Utils/Classes/Events.ts';
+import { OpCodes } from '../../Utils/Classes/OpCodes.ts';
+import type User from '../../Utils/Classes/User.ts';
+import { HardCloseCodes } from '../../Utils/Classes/Utils.ts';
+import type Websocket from '../../Utils/Classes/Websocket.ts';
 
 export default class Resume extends Events {
 	public Websocket: Websocket;

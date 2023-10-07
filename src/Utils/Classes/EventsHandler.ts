@@ -1,5 +1,5 @@
-import type User from './User.js';
-import Utils from './Utils.js';
+import type User from './User.ts';
+import Utils from './Utils.ts';
 
 interface Event {
 	AllowedAuthTypes: number;

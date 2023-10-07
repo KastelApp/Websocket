@@ -1,10 +1,10 @@
 import type { Buffer } from 'node:buffer';
 import { deflateSync } from 'node:zlib';
-import type WebSocket from 'ws';
-import { Flags } from '../../Constants.js';
-import type { WsUser } from '../../Types/index.js';
-import FlagUtilsBInt from './Flags.js';
-import { HardCloseCodes } from './Utils.js';
+import { Flags } from '../../Constants.ts';
+import type { WsUser } from '../../Types/index.ts';
+import FlagUtilsBInt from './Flags.ts';
+import { HardCloseCodes } from './Utils.ts';
+import { ServerWebSocket } from 'bun';
 
 interface EventQueue {
 	E: {
@@ -18,7 +18,12 @@ interface EventQueue {
 class User {
 	public Id: string;
 
-	public Ws: WebSocket.WebSocket;
+	public Ws: ServerWebSocket<{
+		url: string;
+		headers: Headers;
+		sessionId: string;
+		user: User | null;
+	}>;
 
 	public Authed: boolean;
 
@@ -54,7 +59,12 @@ class User {
 
 	public WsUser: WsUser;
 
-	public constructor(id: string, ws: WebSocket.WebSocket, authed: boolean, ip: string) {
+	public constructor(id: string, ws: ServerWebSocket<{
+		url: string;
+		headers: Headers;
+		sessionId: string;
+		user: User | null;
+	}>, authed: boolean, ip: string) {
 		this.Id = id;
 
 		this.Ws = ws;

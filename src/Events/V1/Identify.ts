@@ -1,16 +1,16 @@
-import { Flags } from '../../Constants.js';
-import type IdentifyPayload from '../../Types/V1/Identify.js';
-import type { Channel, Guild, PermissionOverride, Role } from '../../Types/V1/Identify.js';
-import Encryption from '../../Utils/Classes/Encryption.js';
-import WsError from '../../Utils/Classes/Errors.js';
-import Events from '../../Utils/Classes/Events.js';
-import FlagUtilsBInt from '../../Utils/Classes/Flags.js';
-import { OpCodes } from '../../Utils/Classes/OpCodes.js';
-import Token from '../../Utils/Classes/Token.js';
-import type User from '../../Utils/Classes/User.js';
-import Utils, { AuthCodes, HardCloseCodes } from '../../Utils/Classes/Utils.js';
-import type Websocket from '../../Utils/Classes/Websocket.js';
-import type { User as UserType } from '../../Utils/Cql/Types/index.js';
+import { Flags } from '../../Constants.ts';
+import type IdentifyPayload from '../../Types/V1/Identify.ts';
+import type { Channel, Guild, PermissionOverride, Role } from '../../Types/V1/Identify.ts';
+import Encryption from '../../Utils/Classes/Encryption.ts';
+import WsError from '../../Utils/Classes/Errors.ts';
+import Events from '../../Utils/Classes/Events.ts';
+import FlagUtilsBInt from '../../Utils/Classes/Flags.ts';
+import { OpCodes } from '../../Utils/Classes/OpCodes.ts';
+import Token from '../../Utils/Classes/Token.ts';
+import type User from '../../Utils/Classes/User.ts';
+import Utils, { AuthCodes, HardCloseCodes } from '../../Utils/Classes/Utils.ts';
+import type Websocket from '../../Utils/Classes/Websocket.ts';
+import type { User as UserType } from '../../Utils/Cql/Types/index.ts';
 
 export default class Identify extends Events {
 	public Websocket: Websocket;
@@ -207,14 +207,22 @@ export default class Identify extends Events {
 		};
 
 		for (const Guild of (Payload.Guilds ?? [])) {
-			User.WsUser.Channels[Guild.Id] = Guild.Channels.map((channel) => channel.Id);
+			User.WsUser.Channels[Guild.Id] = Guild.Channels.map((channel) => {
+				User.Ws.subscribe(`Channel:${channel.Id}`);
+				
+				return channel.Id;
+			});
+
+			User.Ws.subscribe(`Guild:${Guild.Id}`);
 		}
 
 		User.Authed = true;
 		User.LastHeartbeat = Date.now();
 		User.HeartbeatInterval = Payload.HeartbeatInterval as number;
 		User.Compression = Data.Settings.Compress ?? false;
-
+		
+		User.Ws.subscribe(`User:${CompleteDecrypted.UserId}`); // subscribe to yourself so we can easily broadcast to yourself when we receive a system socket message
+		
 		User.Send({
 			Op: OpCodes.Authed,
 			D: {
@@ -309,10 +317,10 @@ export default class Identify extends Events {
 			const Member = await this.Websocket.Cassandra.Models.GuildMember.get({
 				UserId: Encryption.Encrypt(User.UserId),
 				GuildId: Encryption.Encrypt(GuildId)
-			}, { allowFiltering: true })
+			}, { allowFiltering: true });
 
 			if (!Guild || !Member) continue;
-			
+
 			const FixedRoles: Role[] = [];
 
 			const FixedGuild: Guild = {
@@ -332,7 +340,7 @@ export default class Identify extends Events {
 						User: {
 							Id: User.UserId,
 							Avatar: User.Avatar,
-							Username: User.Username,	
+							Username: User.Username,
 							Tag: User.Tag,
 							GlobalNickname: User.GlobalNickname,
 							Flags: User.Flags,

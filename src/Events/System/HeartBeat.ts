@@ -1,7 +1,7 @@
-import Events from '../../Utils/Classes/Events.js';
-import { OpCodes } from '../../Utils/Classes/OpCodes.js';
+import Events from '../../Utils/Classes/Events.ts';
+import { OpCodes } from '../../Utils/Classes/OpCodes.ts';
 import type User from '../../Utils/Classes/User';
-import { AuthCodes, HardCloseCodes } from '../../Utils/Classes/Utils.js';
+import { AuthCodes, HardCloseCodes } from '../../Utils/Classes/Utils.ts';
 import type Websocket from '../../Utils/Classes/Websocket';
 
 export default class HeartBeat extends Events {

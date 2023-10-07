@@ -242,7 +242,7 @@ const PermissionOverrideTypes = {
 	Role: 1 << 0,
 	Member: 1 << 1,
 	Everyone: 1 << 2
-}
+};
 
 export default {
 	Settings,

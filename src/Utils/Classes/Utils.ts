@@ -1,5 +1,6 @@
 /* eslint-disable unicorn/prefer-math-trunc */
 import crypto from 'node:crypto';
+import { parse } from 'node:url';
 
 const HardCloseCodes = {
 	UnknownError: 4_000, // Unknown error
@@ -16,8 +17,8 @@ const HardCloseCodes = {
 };
 
 const SoftCloseCodes = {
-	UnknownError: 1_000, // Unknown error
-	MissedHeartbeat: 1_001, // Missed heartbeat
+	UnknownError: 1_003, // Unknown error
+	MissedHeartbeat: 1_000, // Missed heartbeat
 };
 
 const AuthCodes = {
@@ -25,11 +26,6 @@ const AuthCodes = {
 	User: 1 << 1,
 	Bot: 1 << 2,
 	Staff: 1 << 3,
-};
-
-const Regexes = {
-	Type: /^\/(?:bot|client|system)\/?/,
-	Params: /[&?][^=]+=[^&]+/,
 };
 
 class Utils {
@@ -119,8 +115,18 @@ class Utils {
 
 		return result;
 	}
+
+	public static getStuff<T = { type: string; query: Record<string, string> }>(url: string): T {
+		const myURL = parse(url);
+		const type = myURL.pathname?.replace('/', '') ?? 'unknown';
+
+		return {
+			type,
+			query: Object.fromEntries(new URLSearchParams(myURL.query ?? "").entries()),
+		} as T;
+	}
 }
 
 export default Utils;
 
-export { AuthCodes, HardCloseCodes, SoftCloseCodes, Regexes, Utils as WsUtils };
+export { AuthCodes, HardCloseCodes, SoftCloseCodes, Utils as WsUtils };
