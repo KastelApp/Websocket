@@ -95,7 +95,15 @@ class Websocket {
 			AllowForDangerousCommands: true,
 		});
 
-		this.Cassandra = new Connection(Config.ScyllaDB.Nodes, Config.ScyllaDB.Username, Config.ScyllaDB.Password, Config.ScyllaDB.Keyspace, Config.ScyllaDB.NetworkTopologyStrategy, Config.ScyllaDB.DurableWrites, Config.ScyllaDB.CassandraOptions);
+		this.Cassandra = new Connection(
+			Config.ScyllaDB.Nodes,
+			Config.ScyllaDB.Username,
+			Config.ScyllaDB.Password,
+			Config.ScyllaDB.Keyspace,
+			Config.ScyllaDB.NetworkTopologyStrategy,
+			Config.ScyllaDB.DurableWrites,
+			Config.ScyllaDB.CassandraOptions,
+		);
 	}
 
 	public async Start() {
@@ -128,10 +136,7 @@ class Websocket {
 		this.Logger.info('Connecting to ScyllaDB');
 		this.Logger.warn('IT IS NOT FROZEN, ScyllaDB may take a while to connect');
 
-		await Promise.all([
-			this.Cassandra.Connect(),
-			this.Cache.connect(),
-		]);
+		await Promise.all([this.Cassandra.Connect(), this.Cache.connect()]);
 
 		this.Logger.info('Creating ScyllaDB Tables.. This may take a while..');
 		this.Logger.warn('IT IS NOT FROZEN, ScyllaDB may take a while to create the tables');
@@ -170,7 +175,7 @@ class Websocket {
 				return;
 			}
 
-			if (user.SocketVersion !== 0) {				
+			if (user.SocketVersion !== 0) {
 				user.Close(4_000, 'Invalid socket version', false);
 
 				return;
@@ -320,7 +325,8 @@ class Websocket {
 			`Git Info:`,
 			`Branch: ${this.GitBranch}`,
 			`Commit: ${GithubInfo.CommitShort ?? GithubInfo.Commit}`,
-			`Status: ${this.Clean ? 'Clean' : 'Dirty - You will not be given support if something breaks with a dirty instance'
+			`Status: ${
+				this.Clean ? 'Clean' : 'Dirty - You will not be given support if something breaks with a dirty instance'
 			}`,
 			'='.repeat(40),
 			'Changed Files:',

@@ -39,7 +39,7 @@ export default class HeartBeat extends Events {
 				Sequence: {
 					Code: 'InvalidSequence',
 					Message: 'The sequence you provided was invalid.',
-				}
+				},
 			});
 
 			user.Send(FailedToHeartBeat, false);

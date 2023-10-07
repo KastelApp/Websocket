@@ -3,7 +3,7 @@ import type {
 	ScyllaDB as ScyllaDBConfigType,
 	Redis as RedisConfigType,
 	Encryption as EncrpytionConfigType,
-	WebsocketConfig as WebsocketConfigType
+	WebsocketConfig as WebsocketConfigType,
 } from './Types/Config';
 
 const Server: WebsocketConfigType = {
@@ -28,13 +28,13 @@ const Redis: RedisConfigType = {
 };
 
 const ScyllaDB: ScyllaDBConfigType = {
-	Nodes: ["localhost"],
+	Nodes: ['localhost'],
 	Keyspace: 'kastel',
 	Username: 'kstl',
 	Password: '',
 	CassandraOptions: {},
 	DurableWrites: true,
-	NetworkTopologyStrategy: {}
+	NetworkTopologyStrategy: {},
 };
 
 const Encryption: EncrpytionConfigType = {
@@ -43,7 +43,6 @@ const Encryption: EncrpytionConfigType = {
 	SecurityKey: '',
 	TokenKey: '',
 };
-
 
 const Config: ConfigConfigType = {
 	Encryption,

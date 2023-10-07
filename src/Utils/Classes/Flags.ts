@@ -20,16 +20,16 @@ class FlagUtilsBInt<
 	public Flags:
 		| T
 		| {
-			[key: string]: bigint;
-		};
+				[key: string]: bigint;
+		  };
 
 	public constructor(
 		bits: bigint | number | string,
 		flags:
 			| T
 			| {
-				[key: string]: bigint;
-			},
+					[key: string]: bigint;
+			  },
 	) {
 		this.bits = BigInt(bits);
 
@@ -63,7 +63,7 @@ class FlagUtilsBInt<
 				return obj;
 			},
 			// eslint-disable-next-line @typescript-eslint/prefer-reduce-type-parameter
-			{} as Record<keyof (typeof this)['Flags'], boolean>
+			{} as Record<keyof (typeof this)['Flags'], boolean>,
 		);
 	}
 
@@ -81,7 +81,6 @@ class FlagUtilsBInt<
 	public removeString(bit: keyof (typeof this)['Flags']) {
 		return this.remove(this.Flags[bit] ?? 0n);
 	}
-
 
 	public get count() {
 		return this.toArray().length;
@@ -134,16 +133,16 @@ class FlagUtils<
 	public Flags:
 		| T
 		| {
-			[key: string]: number;
-		};
+				[key: string]: number;
+		  };
 
 	public constructor(
 		bits: bigint | number | string,
 		flags:
 			| T
 			| {
-				[key: string]: number;
-			},
+					[key: string]: number;
+			  },
 	) {
 		this.bits = Number(bits);
 
@@ -177,7 +176,9 @@ class FlagUtils<
 
 				return obj;
 				// eslint-disable-next-line @typescript-eslint/prefer-reduce-type-parameter
-			}, {} as Record<keyof (typeof this)['Flags'], boolean>);
+			},
+			{},
+		);
 	}
 
 	public toArray(): string[] {

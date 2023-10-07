@@ -21,7 +21,7 @@ const SoftCloseCodes = {
 };
 
 const AuthCodes = {
-	System: 1 << 0, // System is used for handling users & stuff, like sending out events to users
+	System: Math.trunc(1), // System is used for handling users & stuff, like sending out events to users
 	User: 1 << 1,
 	Bot: 1 << 2,
 	Staff: 1 << 3,
@@ -115,7 +115,7 @@ class Utils {
 		return result;
 	}
 
-	public static getStuff<T = { type: string; query: Record<string, string> }>(url: string): T {
+	public static getStuff<T = { query: Record<string, string>; type: string }>(url: string): T {
 		const myURL = new URL(url);
 		const type = myURL.pathname?.replace('/', '') ?? 'unknown';
 

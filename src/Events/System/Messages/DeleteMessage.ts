@@ -36,6 +36,5 @@ export default class DeleteMessage extends Events {
 				Timestamp: number;
 			};
 		},
-	) {
-	}
+	) {}
 }

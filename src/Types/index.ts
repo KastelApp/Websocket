@@ -9,8 +9,8 @@
  * GPL 3.0 Licensed
  */
 
-import type { Flags } from "../Constants";
-import type { FlagUtilsBInt } from "../Utils/Classes/Flags";
+import type { Flags } from '../Constants';
+import type { FlagUtilsBInt } from '../Utils/Classes/Flags';
 
 export interface WsUser {
 	Bot: boolean;

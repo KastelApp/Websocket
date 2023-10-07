@@ -44,13 +44,14 @@ export default class Identify extends Events {
 	) {
 		const FailedToAuth = new WsError(OpCodes.Error);
 
-		if (!Data.Token || User.Authed) { // lazy way to check if the user is already authed
+		if (!Data.Token || User.Authed) {
+			// lazy way to check if the user is already authed
 
 			FailedToAuth.AddError({
 				Token: {
 					Code: 'InvalidToken',
-					Message: 'The token you provided was invalid.'
-				}
+					Message: 'The token you provided was invalid.',
+				},
 			});
 
 			User.Send(FailedToAuth);
@@ -62,12 +63,11 @@ export default class Identify extends Events {
 		const ValidatedToken = Token.ValidateToken(Data.Token);
 
 		if (!ValidatedToken) {
-
 			FailedToAuth.AddError({
 				Token: {
 					Code: 'InvalidToken',
-					Message: 'The token you provided was invalid.'
-				}
+					Message: 'The token you provided was invalid.',
+				},
 			});
 
 			User.Send(FailedToAuth);
@@ -78,25 +78,28 @@ export default class Identify extends Events {
 
 		const DecodedToken = Token.DecodeToken(Data.Token);
 
-		const UsersSettings = await this.Websocket.Cassandra.Models.Settings.get({
-			UserId: Encryption.Encrypt(DecodedToken.Snowflake),
-		}, {
-			fields: ['bio', 'language', 'mentions', 'presence', 'privacy', 'status', 'theme', 'tokens']
-		});
+		const UsersSettings = await this.Websocket.Cassandra.Models.Settings.get(
+			{
+				UserId: Encryption.Encrypt(DecodedToken.Snowflake),
+			},
+			{
+				fields: ['bio', 'language', 'mentions', 'presence', 'privacy', 'status', 'theme', 'tokens'],
+			},
+		);
 
 		const UserData = await this.Websocket.Cassandra.Models.User.get({
 			UserId: Encryption.Encrypt(DecodedToken.Snowflake),
 		});
 
 		if (!UsersSettings || !UserData) {
-			this.Websocket.Logger.debug("User settings wasn't found", (DecodedToken.Snowflake));
+			this.Websocket.Logger.debug("User settings wasn't found", DecodedToken.Snowflake);
 			this.Websocket.Logger.debug(UserData, UsersSettings);
 
 			FailedToAuth.AddError({
 				Token: {
 					Code: 'InvalidToken',
-					Message: 'The token you provided was invalid.'
-				}
+					Message: 'The token you provided was invalid.',
+				},
 			});
 
 			User.Send(FailedToAuth);
@@ -112,7 +115,6 @@ export default class Identify extends Events {
 			UserFlags.hasString('WaitingOnDisableDataUpdate') ||
 			UserFlags.hasString('WaitingOnAccountDeletion')
 		) {
-
 			this.Websocket.Logger.debug('Account Is Deleted or about to be deleted');
 
 			FailedToAuth.AddError({
@@ -129,7 +131,6 @@ export default class Identify extends Events {
 		}
 
 		if (UserFlags.hasString('Terminated') || UserFlags.hasString('Disabled')) {
-
 			this.Websocket.Logger.debug('Account Is Disabled or Terminated');
 
 			FailedToAuth.AddError({
@@ -146,14 +147,13 @@ export default class Identify extends Events {
 		}
 
 		if (UserFlags.hasOneArrayString(['Bot', 'VerifiedBot']) && User.AuthType !== AuthCodes.Bot) {
-
 			this.Websocket.Logger.debug('Account Is a Bot but not authenticated as a bot');
 
 			FailedToAuth.AddError({
 				Token: {
 					Code: 'InvalidToken',
-					Message: 'The token you provided was invalid.'
-				}
+					Message: 'The token you provided was invalid.',
+				},
 			});
 
 			User.Send(FailedToAuth);
@@ -164,7 +164,7 @@ export default class Identify extends Events {
 
 		const CompleteDecrypted: UserType = Encryption.CompleteDecryption({
 			...UserData,
-			Flags: UserData.Flags.toString()
+			Flags: UserData.Flags.toString(),
 		});
 
 		User.WsUser = {
@@ -175,7 +175,7 @@ export default class Identify extends Events {
 			Id: CompleteDecrypted.UserId,
 			Password: CompleteDecrypted.Password,
 			Guilds: CompleteDecrypted.Guilds,
-			Channels: {}
+			Channels: {},
 		};
 
 		const Payload: Partial<IdentifyPayload> = {
@@ -203,13 +203,13 @@ export default class Identify extends Events {
 			Mentions: UsersSettings.Mentions ?? [],
 			Guilds: await this.FetchGuilds(Encryption.CompleteDecryption(UserData.Guilds ?? []), CompleteDecrypted),
 			HeartbeatInterval: Utils.GenerateHeartbeatInterval(),
-			SessionId: User.Id
+			SessionId: User.Id,
 		};
 
-		for (const Guild of (Payload.Guilds ?? [])) {
+		for (const Guild of Payload.Guilds ?? []) {
 			User.WsUser.Channels[Guild.Id] = Guild.Channels.map((channel) => {
 				User.Ws.subscribe(`Channel:${channel.Id}`);
-				
+
 				return channel.Id;
 			});
 
@@ -220,16 +220,19 @@ export default class Identify extends Events {
 		User.LastHeartbeat = Date.now();
 		User.HeartbeatInterval = Payload.HeartbeatInterval as number;
 		User.Compression = Data.Settings.Compress ?? false;
-		
+
 		User.Ws.subscribe(`User:${CompleteDecrypted.UserId}`); // subscribe to yourself so we can easily broadcast to yourself when we receive a system socket message
-		
-		User.Send({
-			Op: OpCodes.Authed,
-			D: {
-				...this.EmptyStringToNull(Payload),
-				HeartbeatInterval: User.HeartbeatInterval,
-			}
-		}, false);
+
+		User.Send(
+			{
+				Op: OpCodes.Authed,
+				D: {
+					...this.EmptyStringToNull(Payload),
+					HeartbeatInterval: User.HeartbeatInterval,
+				},
+			},
+			false,
+		);
 	}
 
 	private EmptyStringToNull<T = any>(obj: T): T {
@@ -250,7 +253,6 @@ export default class Identify extends Events {
 				} else {
 					newObject[key] = value === '' ? null : value;
 				}
-
 			}
 
 			return newObject;
@@ -265,15 +267,15 @@ export default class Identify extends Events {
 		const FixedChannels: Channel[] = [];
 
 		const Channels = await this.Websocket.Cassandra.Models.Channel.find({
-			GuildId: Encryption.Encrypt(GuildId)
+			GuildId: Encryption.Encrypt(GuildId),
 		});
 
 		for (const Channel of Channels.toArray()) {
 			const PermissionOverrides: PermissionOverride[] = [];
 
-			for (const PermissionOverrideId of (Channel.PermissionsOverrides ?? [])) {
+			for (const PermissionOverrideId of Channel.PermissionsOverrides ?? []) {
 				const Override = await this.Websocket.Cassandra.Models.PermissionOverride.get({
-					PermissionId: PermissionOverrideId
+					PermissionId: PermissionOverrideId,
 				});
 
 				if (!Override) continue;
@@ -299,7 +301,7 @@ export default class Identify extends Events {
 				PermissionsOverrides: PermissionOverrides,
 				Position: Channel.Position,
 				Slowmode: Channel.Slowmode,
-				Type: Channel.Type
+				Type: Channel.Type,
 			});
 		}
 
@@ -311,13 +313,16 @@ export default class Identify extends Events {
 
 		for (const GuildId of Guilds) {
 			const Guild = await this.Websocket.Cassandra.Models.Guild.get({
-				GuildId: Encryption.Encrypt(GuildId)
+				GuildId: Encryption.Encrypt(GuildId),
 			});
 
-			const Member = await this.Websocket.Cassandra.Models.GuildMember.get({
-				UserId: Encryption.Encrypt(User.UserId),
-				GuildId: Encryption.Encrypt(GuildId)
-			}, { allowFiltering: true });
+			const Member = await this.Websocket.Cassandra.Models.GuildMember.get(
+				{
+					UserId: Encryption.Encrypt(User.UserId),
+					GuildId: Encryption.Encrypt(GuildId),
+				},
+				{ allowFiltering: true },
+			);
 
 			if (!Guild || !Member) continue;
 
@@ -329,7 +334,7 @@ export default class Identify extends Events {
 				CoOwners: Guild.CoOwners ?? [],
 				Features: Guild.Features ?? [],
 				Description: Guild.Description,
-				Channels: await this.FetchChannels(GuildId) as Channel[],
+				Channels: (await this.FetchChannels(GuildId)) as Channel[],
 				Flags: Guild.Flags,
 				MaxMembers: Guild.MaxMembers,
 				Name: Guild.Name,
@@ -349,12 +354,12 @@ export default class Identify extends Events {
 						Nickname: Member.Nickname,
 						Roles: Member.Roles ?? [],
 						Owner: Encryption.Decrypt(Guild.OwnerId) === User.UserId,
-					}
-				]
+					},
+				],
 			};
 
 			const Roles = await this.Websocket.Cassandra.Models.Role.find({
-				GuildId: Encryption.Encrypt(GuildId)
+				GuildId: Encryption.Encrypt(GuildId),
 			});
 
 			for (const Role of Roles.toArray()) {
@@ -367,13 +372,13 @@ export default class Identify extends Events {
 					Deleteable: Role.Deleteable,
 					Hoisted: Role.Hoisted,
 					Permissions: Role.Permissions.toString(),
-					Position: Role.Position
+					Position: Role.Position,
 				});
 			}
 
 			BuildGuilds.push({
 				...FixedGuild,
-				Roles: FixedRoles
+				Roles: FixedRoles,
 			});
 		}
 

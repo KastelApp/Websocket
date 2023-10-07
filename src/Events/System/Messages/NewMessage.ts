@@ -48,7 +48,5 @@ export default class NewMessage extends Events {
 				Timestamp: number;
 			};
 		},
-	) {
-
-	}
+	) {}
 }

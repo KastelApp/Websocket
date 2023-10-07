@@ -39,30 +39,34 @@ const Settings = {
 		ForgotPassword: false,
 		ChangePassword: false,
 		ChangeEmail: false,
-	}
+	},
 };
 
 // Note: You should NOT change these at all unless you know what you are doing
 // The frontend depends on these
-const GuildFeatures = [{
-	Name: 'Partnered',
-	Deprecated: false, // deprecated means it will be removed in the future
-	Default: false, // If servers are given this by default on guild creation
-	Settable: false, // if a user can set it themselves
-	NewDefault: false // If its a "new default" this means if we lets say fetch a guild we need to add this
-}, {
-	Name: 'Verified',
-	Deprecated: false,
-	Enabled: false,
-	Settable: false,
-	NewDefault: false
-}, {
-	Name: 'Official',
-	Deprecated: false,
-	Enabled: false,
-	Settable: false,
-	NewDefault: false
-}] as const;
+const GuildFeatures = [
+	{
+		Name: 'Partnered',
+		Deprecated: false, // deprecated means it will be removed in the future
+		Default: false, // If servers are given this by default on guild creation
+		Settable: false, // if a user can set it themselves
+		NewDefault: false, // If its a "new default" this means if we lets say fetch a guild we need to add this
+	},
+	{
+		Name: 'Verified',
+		Deprecated: false,
+		Enabled: false,
+		Settable: false,
+		NewDefault: false,
+	},
+	{
+		Name: 'Official',
+		Deprecated: false,
+		Enabled: false,
+		Settable: false,
+		NewDefault: false,
+	},
+] as const;
 
 const AllowedMentions: {
 	All?: number;
@@ -151,23 +155,23 @@ const Flags = {
 	IncreasedGuildCount500: 1n << 82n,
 	IncreasedMessageLength2k: 1n << 83n,
 	IncreasedMessageLength4k: 1n << 84n,
-	IncreasedMessageLength8k: 1n << 85n
+	IncreasedMessageLength8k: 1n << 85n,
 };
 
 const PublicFlags: (keyof typeof Flags)[] = [
-	"StaffBadge",
-	"GhostBadge",
-	"SponsorBadge",
-	"DeveloperBadge",
-	"VerifiedBotDeveloperBadge",
-	"OriginalUserBadge",
-	"PartnerBadge",
-	"ModeratorBadge",
-	"MinorBugHunterBadge",
-	"IntermediateBugHunterBadge",
-	"MajorBugHunterBadge",
-	"VerifiedBot",
-	"Spammer"
+	'StaffBadge',
+	'GhostBadge',
+	'SponsorBadge',
+	'DeveloperBadge',
+	'VerifiedBotDeveloperBadge',
+	'OriginalUserBadge',
+	'PartnerBadge',
+	'ModeratorBadge',
+	'MinorBugHunterBadge',
+	'IntermediateBugHunterBadge',
+	'MajorBugHunterBadge',
+	'VerifiedBot',
+	'Spammer',
 ];
 
 const MixedPermissions = {
@@ -226,7 +230,7 @@ const Relative = {
 const VerificationFlags = {
 	VerifyEmail: 1 << 0,
 	ForgotPassword: 1 << 1,
-	ChangeEmail: 1 << 2
+	ChangeEmail: 1 << 2,
 };
 
 const Snowflake = {
@@ -235,13 +239,13 @@ const Snowflake = {
 	WorkerIdBytes: 12,
 	ProcessIdBytes: 1,
 	WorkerId: 5,
-	ProcessId: process.pid
+	ProcessId: process.pid,
 };
 
 const PermissionOverrideTypes = {
 	Role: 1 << 0,
 	Member: 1 << 1,
-	Everyone: 1 << 2
+	Everyone: 1 << 2,
 };
 
 export default {
@@ -263,7 +267,7 @@ export default {
 	Snowflake,
 	PublicFlags,
 	GuildFeatures,
-	PermissionOverrideTypes
+	PermissionOverrideTypes,
 };
 
 export {
@@ -285,5 +289,5 @@ export {
 	Snowflake,
 	PublicFlags,
 	GuildFeatures,
-	PermissionOverrideTypes
+	PermissionOverrideTypes,
 };

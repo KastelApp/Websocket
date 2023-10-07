@@ -30,18 +30,19 @@ export default class Resume extends Events {
 			Sequence: number;
 			SessionId: string;
 		},
-		Users: Map<string, User>
+		Users: Map<string, User>,
 	) {
 		const FailedToResume = new WsError(OpCodes.Error);
 
 		const FoundUser = Users.get(Data.SessionId);
 
-		if (!FoundUser?.Authed || User.Authed) { // no need to resume if you aren't even authed
+		if (!FoundUser?.Authed || User.Authed) {
+			// no need to resume if you aren't even authed
 			FailedToResume.AddError({
 				SessionId: {
 					Code: 'InvalidSessionId',
 					Message: 'The session id you provided was invalid.',
-				}
+				},
 			});
 
 			User.Send(FailedToResume, false);
@@ -55,7 +56,7 @@ export default class Resume extends Events {
 				Sequence: {
 					Code: 'InvalidSequence',
 					Message: 'The sequence you provided was invalid.',
-				}
+				},
 			});
 
 			User.Send(FailedToResume, false);
@@ -73,12 +74,15 @@ export default class Resume extends Events {
 
 		Users.set(FoundUser.Id, FoundUser);
 
-		FoundUser.Send({
-			Op: OpCodes.Authed,
-			Data: {
-				HeartbeatInterval: FoundUser.HeartbeatInterval
-			}
-		}, false);
+		FoundUser.Send(
+			{
+				Op: OpCodes.Authed,
+				Data: {
+					HeartbeatInterval: FoundUser.HeartbeatInterval,
+				},
+			},
+			false,
+		);
 
 		FoundUser.Queue();
 	}

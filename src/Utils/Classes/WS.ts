@@ -1,13 +1,13 @@
 import type { Buffer } from 'node:buffer';
 import { EventEmitter } from 'node:events';
 import { setInterval } from 'node:timers';
+import type { Server, ServerWebSocket } from 'bun';
 import WsError from './Errors.ts';
 import Events from './EventsHandler.ts';
 import type Logger from './Logger.ts';
 import { OpCodes } from './OpCodes.ts';
 import User from './User.ts';
 import Utils, { HardCloseCodes, AuthCodes, SoftCloseCodes } from './Utils.ts';
-import { Server, ServerWebSocket } from 'bun';
 
 export interface WebsocketServer {
 	emit(event: 'connection', user: User): boolean;
@@ -72,7 +72,7 @@ export class WebsocketServer extends EventEmitter {
 	}
 
 	public CreateWs(): Server {
-		this.MainSocket = Bun.serve<{ url: string; headers: Headers; sessionId: string; user: User | null; }>({
+		this.MainSocket = Bun.serve<{ headers: Headers; sessionId: string; url: string; user: User | null }>({
 			port: this.Port,
 			fetch: (req, server) => this.Upgrade(req, server),
 			websocket: {
@@ -82,7 +82,7 @@ export class WebsocketServer extends EventEmitter {
 				// max is 10MB
 				maxPayloadLength: 10 * 1_024 * 1_024,
 			},
-			hostname: 'localhost'
+			hostname: 'localhost',
 		});
 
 		this.emit('listening', this.Port ?? 0);
@@ -94,19 +94,23 @@ export class WebsocketServer extends EventEmitter {
 		return this.MainSocket;
 	}
 
-	public HandleClose(ws: ServerWebSocket<{
-		url: string;
-		headers: Headers;
-		sessionId: string;
-		user: User | null;
-	}>, code: number, reason: string) {
+	public HandleClose(
+		ws: ServerWebSocket<{
+			headers: Headers;
+			sessionId: string;
+			url: string;
+			user: User | null;
+		}>,
+		code: number,
+		reason: string,
+	) {
 		if ([2, 3].includes(ws.readyState)) {
 			this.Logger.debug(`Connection from ${ws.data.sessionId} has been closed`, code, reason);
 
 			if (ws.data.user?.Closed || ws.data.user?.ClosedAt) {
 				this.emit('close', ws.data.user, true);
 
-				return; // We were expecting this
+				// We were expecting this
 			} else {
 				ws.data.user?.Close(code, 'Connection closed', true);
 
@@ -117,20 +121,23 @@ export class WebsocketServer extends EventEmitter {
 		}
 	}
 
-	private Upgrade(req: Request, server: Server): Response { // in case we want to do stuff with like headers
-		server.upgrade<{ url: string; headers: Headers; sessionId: string; user: User | null; }>(req, {
+	private Upgrade(req: Request, server: Server): Response {
+		// in case we want to do stuff with like headers
+		server.upgrade<{ headers: Headers; sessionId: string; url: string; user: User | null }>(req, {
 			data: {
 				url: req.url,
 				headers: req.headers,
 				sessionId: Utils.GenerateSessionId(),
 				user: null,
-			}
+			},
 		});
 
 		return new Response();
 	}
 
-	private onConnection(socket: ServerWebSocket<{ url: string; headers: Headers; sessionId: string; user: User | null; }>) {
+	private onConnection(
+		socket: ServerWebSocket<{ headers: Headers; sessionId: string; url: string; user: User | null }>,
+	) {
 		const ip = socket.remoteAddress as string;
 		const ipConnections = Array.from(this.ConnectedUsers.values()).filter((usr) => usr.Ip === ip);
 		const InvalidRequest = new WsError(OpCodes.Error);
@@ -142,7 +149,7 @@ export class WebsocketServer extends EventEmitter {
 				Connection: {
 					Code: 'MaxConnections',
 					Message: 'Max connections reached',
-				}
+				},
 			});
 
 			socket.send(InvalidRequest.toString());
@@ -161,7 +168,7 @@ export class WebsocketServer extends EventEmitter {
 				Connection: {
 					Code: 'MaxConnections',
 					Message: 'Max connections reached',
-				}
+				},
 			});
 
 			socket.send(InvalidRequest.toString());
@@ -181,7 +188,7 @@ export class WebsocketServer extends EventEmitter {
 				Connection: {
 					Code: 'InvalidConnection',
 					Message: 'Invalid connection',
-				}
+				},
 			});
 
 			socket.send(InvalidRequest.toString());
@@ -193,7 +200,7 @@ export class WebsocketServer extends EventEmitter {
 		}
 
 		const foundStuff = Utils.getStuff(socket.data.url as string);
-		
+
 		const userType = ['client', 'system', 'bot'].includes(foundStuff.type) ? `/${foundStuff.type}` : null;
 		const params = foundStuff.query;
 
@@ -204,7 +211,7 @@ export class WebsocketServer extends EventEmitter {
 				Connection: {
 					Code: 'InvalidConnection',
 					Message: 'Failed to detect type of connection',
-				}
+				},
 			});
 
 			socket.send(InvalidRequest.toString());
@@ -217,9 +224,7 @@ export class WebsocketServer extends EventEmitter {
 
 		const user = new User(socket.data.sessionId, socket, false, ip);
 
-		user.AuthType = (
-			userType === '/bot' ? AuthCodes.Bot : userType === '/system' ? AuthCodes.System : AuthCodes.User
-		);
+		user.AuthType = userType === '/bot' ? AuthCodes.Bot : userType === '/system' ? AuthCodes.System : AuthCodes.User;
 
 		user.Params = params;
 
@@ -234,8 +239,10 @@ export class WebsocketServer extends EventEmitter {
 			InvalidRequest.AddError({
 				Encoding: {
 					Code: 'InvalidEncoding',
-					Message: `The Encoding you provided was invalid, Accepted types are "json", received "${usersParams.encoding ?? 'none'}"`,
-				}
+					Message: `The Encoding you provided was invalid, Accepted types are "json", received "${
+						usersParams.encoding ?? 'none'
+					}"`,
+				},
 			});
 
 			socket.send(InvalidRequest.toString());
@@ -254,7 +261,7 @@ export class WebsocketServer extends EventEmitter {
 				Version: {
 					Code: 'InvalidVersion',
 					Message: 'The Version you provided was invalid',
-				}
+				},
 			});
 
 			socket.send(InvalidRequest.toString());
@@ -276,7 +283,10 @@ export class WebsocketServer extends EventEmitter {
 		this.emit('connection', user);
 	}
 
-	private onMessage(socket: ServerWebSocket<{ url: string; headers: Headers; sessionId: string; user: User | null; }>, message: string | Buffer) {
+	private onMessage(
+		socket: ServerWebSocket<{ headers: Headers; sessionId: string; url: string; user: User | null }>,
+		message: Buffer | string,
+	) {
 		try {
 			const InvalidRequest = new WsError(OpCodes.Error);
 
@@ -284,7 +294,7 @@ export class WebsocketServer extends EventEmitter {
 				D?: any;
 				Event?: string;
 				Op?: number;
-			} = JSON.parse(typeof message === 'string' ? message : "{}");
+			} = JSON.parse(typeof message === 'string' ? message : '{}');
 
 			if (!json.Event && !json.Op) {
 				// (E/O) = Event or OP
@@ -293,7 +303,7 @@ export class WebsocketServer extends EventEmitter {
 					Op: {
 						Code: 'InvalidOp',
 						Message: 'The Op you provided was invalid',
-					}
+					},
 				});
 
 				socket.send(InvalidRequest.toString());
@@ -313,8 +323,8 @@ export class WebsocketServer extends EventEmitter {
 				socket.data.user?.Close(HardCloseCodes.UnknownOpcode, 'Invalid request (E)', this.CloseOnError);
 
 				this.Logger.debug(
-					`Event was not found from ${socket.data.sessionId} with the name ${json.Event ?? json.Op} (${socket.data.user?.Ip}) version: ${socket.data.user?.SocketVersion
-					}`,
+					`Event was not found from ${socket.data.sessionId} with the name ${json.Event ?? json.Op} (${socket.data.user
+						?.Ip}) version: ${socket.data.user?.SocketVersion}`,
 				);
 
 				return;
@@ -324,19 +334,26 @@ export class WebsocketServer extends EventEmitter {
 				// (A) = Auth (not authed)
 				socket.data.user?.Close(HardCloseCodes.NotAuthenticated, 'Invalid request (A)', this.CloseOnError);
 
-				this.Logger.debug(`Event ${foundEvent.Name} was not authed from ${socket.data.sessionId} (${socket.data.user?.Ip})`);
+				this.Logger.debug(
+					`Event ${foundEvent.Name} was not authed from ${socket.data.sessionId} (${socket.data.user?.Ip})`,
+				);
 
 				return;
 			}
 
 			if (foundEvent.StrictCheck) {
-				const validated = Utils.ValidateAuthCode(foundEvent.AllowedAuthTypes, socket.data.user?.AuthType ?? AuthCodes.User);
+				const validated = Utils.ValidateAuthCode(
+					foundEvent.AllowedAuthTypes,
+					socket.data.user?.AuthType ?? AuthCodes.User,
+				);
 
 				if (!validated) {
 					// (A) = Auth (not authed)
 					socket.data.user?.Close(HardCloseCodes.NotAuthenticated, 'Invalid request (A)', this.CloseOnError);
 
-					this.Logger.debug(`Event ${foundEvent.Name} was not authed from ${socket.data.sessionId} (${socket.data.user?.Ip})`);
+					this.Logger.debug(
+						`Event ${foundEvent.Name} was not authed from ${socket.data.sessionId} (${socket.data.user?.Ip})`,
+					);
 
 					return;
 				}
@@ -357,7 +374,6 @@ export class WebsocketServer extends EventEmitter {
 				this.Logger.debug(`User ${socket.remoteAddress} has already been closed`);
 			}
 		}
-
 	}
 
 	public StartHeartbeatCheck() {
@@ -368,14 +384,16 @@ export class WebsocketServer extends EventEmitter {
 
 				if (user.LastHeartbeat + user.HeartbeatInterval + 10_000 < Date.now()) {
 					this.Logger.debug(
-						`User ${id} has not sent a heartbeat in ${user.HeartbeatInterval + 10_000
-						}ms, closing connection (We got ${this.ConnectedUsers.size} users left)`,
+						`User ${id} has not sent a heartbeat in ${user.HeartbeatInterval + 10_000}ms, closing connection (We got ${
+							this.ConnectedUsers.size
+						} users left)`,
 					);
 
 					user.Close(SoftCloseCodes.MissedHeartbeat, 'Missed Heartbeat', false);
 				} else {
 					this.Logger.debug(
-						`User ${id} sent a heartbeat at ${new Date(user.LastHeartbeat).toLocaleString()}, which is ${Date.now() - user.LastHeartbeat
+						`User ${id} sent a heartbeat at ${new Date(user.LastHeartbeat).toLocaleString()}, which is ${
+							Date.now() - user.LastHeartbeat
 						}ms ago`,
 					);
 				}
@@ -391,7 +409,9 @@ export class WebsocketServer extends EventEmitter {
 				// if they closed more then 8 seconds ago, remove them
 				if ((user.ClosedAt as number) + 8_000 < Date.now()) {
 					this.ConnectedUsers.delete(id);
-					this.Logger.debug(`User ${id} has been removed for being closed (We got ${this.ConnectedUsers.size} users left)`);
+					this.Logger.debug(
+						`User ${id} has been removed for being closed (We got ${this.ConnectedUsers.size} users left)`,
+					);
 				} else {
 					this.Logger.debug(`User ${id} has been closed for ${Date.now() - (user.ClosedAt as number)}ms`);
 				}

@@ -52,6 +52,5 @@ export default class UpdateMessages extends Events {
 				UpdatedAt: number;
 			};
 		},
-	) {
-	}
+	) {}
 }

@@ -22,5 +22,5 @@ export default class RequestGuild extends Events {
 		this.Version = 1;
 	}
 
-	public override async Execute(user: User, data: {}) { }
+	public override async Execute(user: User, data: {}) {}
 }
