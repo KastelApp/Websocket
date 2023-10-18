@@ -123,14 +123,18 @@ export class WebsocketServer extends EventEmitter {
 
 	private Upgrade(req: Request, server: Server): Response {
 		// in case we want to do stuff with like headers
-		server.upgrade<{ headers: Headers; sessionId: string; url: string; user: User | null }>(req, {
+		if (!server.upgrade<{ headers: Headers; sessionId: string; url: string; user: User | null }>(req, {
 			data: {
 				url: req.url,
 				headers: req.headers,
 				sessionId: Utils.GenerateSessionId(),
 				user: null,
 			},
-		});
+		})) {
+			return new Response('I couldn\'t upgrade you, sorry. Make sure you are connecting to the WS and not making an HTTP request!', {
+				status: 500,
+			})
+		}
 
 		return new Response();
 	}

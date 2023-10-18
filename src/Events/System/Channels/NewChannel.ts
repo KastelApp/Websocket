@@ -47,14 +47,40 @@ export default class NewChannel extends Events {
 	) {
 		const Decrypted = Encryption.CompleteDecryption(data);
 
+		const Data: {
+			AllowedMentions: number;
+			ChannelId?: string;
+			Children: string[];
+			Description: string;
+			GuildId: string;
+			Id?: string | undefined;
+			Name: string;
+			Nsfw: boolean;
+			ParentId: string;
+			PermissionsOverrides: PermissionOverride[];
+			Position: number;
+			Slowmode: number;
+			Type: number;
+		} = Decrypted;
+
+		Data.Id = Data.ChannelId;
+		
+		delete Data.ChannelId;
+		
 		this.Websocket.wss.MainSocket?.publish(
 			`Guild:${Decrypted.GuildId}`,
 			JSON.stringify({
 				Op: OpCodes.ChannelNew,
 				Event: this.Name,
-				D: Decrypted,
+				D: Data,
 			}),
 		);
+		
+		for (const [, user] of this.Websocket.wss.ConnectedUsers.entries()) {
+			if (!user.Authed || !user.WsUser.Guilds.includes(Decrypted.GuildId)) continue;
+			
+			user.Ws.subscribe(`Channel:${Decrypted.ChannelId}`);
+		}
 
 		user.Send({
 			op: SystemOpCodes.NewChannelAck,

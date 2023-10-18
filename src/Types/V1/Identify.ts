@@ -99,4 +99,4 @@ export default interface IdentifyPayload {
 	User: UserObject;
 }
 
-export type { UserObject, Settings, Mention, Role, Channel, Guild, IdentifyPayload, PermissionOverride };
+export type { UserObject, Settings, Mention, Role, Channel, Guild, IdentifyPayload, PermissionOverride, Member };
