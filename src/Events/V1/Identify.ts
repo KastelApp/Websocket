@@ -1,6 +1,6 @@
 import { Flags } from '../../Constants.ts';
 import type IdentifyPayload from '../../Types/V1/Identify.ts';
-import type { Channel, Guild, PermissionOverride, Role } from '../../Types/V1/Identify.ts';
+import type { Channel, Guild, Member, PermissionOverride, Role } from '../../Types/V1/Identify.ts';
 import Encryption from '../../Utils/Classes/Encryption.ts';
 import WsError from '../../Utils/Classes/Errors.ts';
 import Events from '../../Utils/Classes/Events.ts';
@@ -327,6 +327,39 @@ export default class Identify extends Events {
 			if (!Guild || !Member) continue;
 
 			const FixedRoles: Role[] = [];
+			
+			const Members = await this.Websocket.Cassandra.Models.GuildMember.find({
+				GuildId: Encryption.Encrypt(GuildId),
+			}, {
+				limit: 200
+			});
+			
+			const FixedMembers: Member[] = [];
+			
+			for (const Member of Members.toArray()) {
+				if (Member.UserId === User.UserId) continue; // don't add yourself to the members list (you're already in it)
+				
+				const MemberUser = await this.Websocket.Cassandra.Models.User.get({
+					UserId: Member.UserId,
+				});
+
+				if (!MemberUser) continue;
+				
+				FixedMembers.push({
+					JoinedAt: Member.JoinedAt,
+					Nickname: Member.Nickname,
+					Owner: Encryption.Decrypt(Guild.OwnerId) === Member.UserId, // should be false
+					Roles: Member.Roles ?? [],
+					User: {
+						Id: MemberUser.UserId,
+						Avatar: MemberUser.Avatar,
+						Username: MemberUser.Username,
+						Tag: MemberUser.Tag,
+						GlobalNickname: MemberUser.GlobalNickname,
+						Flags: MemberUser.Flags,
+					}
+				})
+			}
 
 			const FixedGuild: Guild = {
 				Id: Guild.GuildId,
@@ -334,7 +367,7 @@ export default class Identify extends Events {
 				CoOwners: Guild.CoOwners ?? [],
 				Features: Guild.Features ?? [],
 				Description: Guild.Description,
-				Channels: (await this.FetchChannels(GuildId)) as Channel[],
+				Channels: (await this.FetchChannels(GuildId)) ?? [],
 				Flags: Guild.Flags,
 				MaxMembers: Guild.MaxMembers,
 				Name: Guild.Name,
@@ -355,13 +388,14 @@ export default class Identify extends Events {
 						Roles: Member.Roles ?? [],
 						Owner: Encryption.Decrypt(Guild.OwnerId) === User.UserId,
 					},
+					...FixedMembers
 				],
 			};
 
 			const Roles = await this.Websocket.Cassandra.Models.Role.find({
 				GuildId: Encryption.Encrypt(GuildId),
 			});
-
+			
 			for (const Role of Roles.toArray()) {
 				FixedRoles.push({
 					Id: Role.RoleId,

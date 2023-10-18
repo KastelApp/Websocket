@@ -47,12 +47,32 @@ export default class UpdateChannel extends Events {
 	) {
 		const Decrypted = Encryption.CompleteDecryption(data);
 
+		const Data: {
+			AllowedMentions: number;
+			ChannelId?: string;
+			Children: string[];
+			Description: string;
+			GuildId: string;
+			Id?: string | undefined;
+			Name: string;
+			Nsfw: boolean;
+			ParentId: string;
+			PermissionsOverrides: PermissionOverride[];
+			Position: number;
+			Slowmode: number;
+			Type: number;
+		} = Decrypted;
+
+		Data.Id = Data.ChannelId;
+
+		delete Data.ChannelId;
+
 		this.Websocket.wss.MainSocket?.publish(
 			`Guild:${Decrypted.GuildId}`,
 			JSON.stringify({
 				Op: OpCodes.ChannelUpdate,
 				Event: this.Name,
-				D: Decrypted,
+				D: Data,
 			}),
 		);
 

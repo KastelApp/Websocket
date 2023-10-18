@@ -4,7 +4,7 @@
 	"version": "1.0.0",
 	"main": "src/index.ts",
 	"dependencies": {
-		"@kastelll/cassandra-driver": "^4.6.16",
+		"@kastelll/cassandra-driver": "^4.6.18",
 		"@kastelll/util": "0.2.3",
 		"@sentry/node": "^7.64.0",
 		"archiver": "^5.3.2",
