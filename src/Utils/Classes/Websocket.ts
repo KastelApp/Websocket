@@ -84,7 +84,7 @@ class Websocket {
 	public Args: 'debug'[] = ProcessArgs(['debug']).Valid as 'debug'[];
 
 	public constructor() {
-		this.wss = new WebsocketServer(Server.Port, Server.AllowedIps, Server.CloseOnError, this.Logger);
+		this.wss = new WebsocketServer(Server.Port, Server.Host ?? 'localhost', Server.AllowedIps, Server.CloseOnError, this.Logger);
 
 		this.Cache = new CacheManager({
 			Host: Redis.Host,

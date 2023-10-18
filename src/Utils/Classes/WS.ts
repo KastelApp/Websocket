@@ -30,6 +30,8 @@ export class WebsocketServer extends EventEmitter {
 	private readonly Logger: Logger;
 
 	public Port: number;
+	
+	public Host: string;
 
 	public AllowedIps: string[];
 
@@ -45,7 +47,7 @@ export class WebsocketServer extends EventEmitter {
 
 	public UnauthedTimeout: number;
 
-	public constructor(port: number, allowedIps: string[], closeOnError: boolean, logger: Logger) {
+	public constructor(port: number, host: string, allowedIps: string[], closeOnError: boolean, logger: Logger) {
 		super();
 
 		this.ConnectedUsers = new Map();
@@ -55,6 +57,8 @@ export class WebsocketServer extends EventEmitter {
 		this.MainSocket = null;
 
 		this.Port = port;
+		
+		this.Host = host;
 
 		this.AllowedIps = allowedIps;
 
@@ -82,7 +86,7 @@ export class WebsocketServer extends EventEmitter {
 				// max is 10MB
 				maxPayloadLength: 10 * 1_024 * 1_024,
 			},
-			hostname: 'localhost',
+			hostname: this.Host
 		});
 
 		this.emit('listening', this.Port ?? 0);
