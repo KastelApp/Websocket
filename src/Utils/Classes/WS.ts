@@ -131,6 +131,8 @@ export class WebsocketServer extends EventEmitter {
 				user: null,
 			},
 		})) {
+			this.Logger.warn('Failed to upgrade connection');
+
 			return new Response('I couldn\'t upgrade you, sorry. Make sure you are connecting to the WS and not making an HTTP request!', {
 				status: 500,
 			})
