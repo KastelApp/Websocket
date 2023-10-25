@@ -12,5 +12,7 @@
 	},
 	"files.insertFinalNewline": true,
 	"files.eol": "\n",
-	"npm.packageManager": "yarn"
+	"[typescript]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	}
 }

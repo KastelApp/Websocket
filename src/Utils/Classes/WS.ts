@@ -1,6 +1,7 @@
 import type { Buffer } from 'node:buffer';
 import { EventEmitter } from 'node:events';
 import { setInterval } from 'node:timers';
+import { URL } from 'node:url';
 import type { Server, ServerWebSocket } from 'bun';
 import WsError from './Errors.ts';
 import Events from './EventsHandler.ts';
@@ -126,6 +127,12 @@ export class WebsocketServer extends EventEmitter {
 	}
 
 	private Upgrade(req: Request, server: Server): Response {
+		const path = new URL(req.url).pathname;
+		
+		if (path === '/cdn-cfw/health/check') {
+			return new Response('OK');
+		}
+		
 		// in case we want to do stuff with like headers
 		if (!server.upgrade<{ headers: Headers; sessionId: string; url: string; user: User | null }>(req, {
 			data: {
