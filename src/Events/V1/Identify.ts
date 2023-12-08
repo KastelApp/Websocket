@@ -337,7 +337,7 @@ export default class Identify extends Events {
 			const FixedMembers: Member[] = [];
 			
 			for (const Member of Members.toArray()) {
-				if (Member.UserId === User.UserId) continue; // don't add yourself to the members list (you're already in it)
+				if (Encryption.Decrypt(Member.UserId) === User.UserId) continue; // don't add yourself to the members list (you're already in it)
 				
 				const MemberUser = await this.Websocket.Cassandra.Models.User.get({
 					UserId: Member.UserId,
