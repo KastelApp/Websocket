@@ -48,14 +48,16 @@ export default class GuildJoin extends Events {
         
 		const Decrypted = Encryption.CompleteDecryption(await this.FetchGuilds([data.GuildId], Encryption.CompleteDecryption(fetchedUser)));
 
-		this.Websocket.wss.MainSocket?.publish(
-			`User:${data.UserId}`,
-			JSON.stringify({
-				Op: OpCodes.GuildNew,
-				Event: this.Name,
-				D: Decrypted,
-			}),
-		);
+		for (const Guild of Decrypted) {
+            this.Websocket.wss.MainSocket?.publish(
+                `User:${data.UserId}`,
+                JSON.stringify({
+                    Op: OpCodes.GuildNew,
+                    Event: this.Name,
+                    D: Guild,
+                }),
+            );
+        }
         
 		user.Send({
 			op: SystemOpCodes.NewGuildAck,
