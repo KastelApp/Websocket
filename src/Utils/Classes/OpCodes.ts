@@ -33,6 +33,7 @@ const OpCodes = {
 	SelfUpdate: 31,
 	RelationshipUpdate: 32,
 	Error: 33,
+	GuildJoin: 34 // private
 };
 
 const SystemOpCodes = {
