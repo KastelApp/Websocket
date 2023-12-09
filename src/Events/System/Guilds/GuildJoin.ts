@@ -56,6 +56,8 @@ export default class GuildJoin extends Events {
 				D: Decrypted,
 			}),
 		);
+        
+        console.log(`User:${data.UserId}`, Decrypted)
 
 		user.Send({
 			op: SystemOpCodes.NewGuildAck,
