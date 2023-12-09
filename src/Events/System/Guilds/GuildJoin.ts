@@ -46,7 +46,7 @@ export default class GuildJoin extends Events {
         
         if (!fetchedUser) return;
         
-		const Decrypted = Encryption.CompleteDecryption(await this.FetchGuilds([data.GuildId], fetchedUser));
+		const Decrypted = Encryption.CompleteDecryption(await this.FetchGuilds([data.GuildId], Encryption.CompleteDecryption(fetchedUser)));
 
 		this.Websocket.wss.MainSocket?.publish(
 			`User:${data.UserId}`,
