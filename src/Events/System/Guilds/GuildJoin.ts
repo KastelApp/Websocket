@@ -42,7 +42,7 @@ export default class GuildJoin extends Events {
             UserId: string;
 		},
 	) {
-        const fetchedUser = await this.Websocket.Cassandra.Models.User.get({ UserId: data.UserId });
+        const fetchedUser = await this.Websocket.Cassandra.Models.User.get({ UserId: Encryption.Encrypt(data.UserId) });
         
         if (!fetchedUser) return;
         
@@ -57,8 +57,6 @@ export default class GuildJoin extends Events {
 			}),
 		);
         
-        console.log(`User:${data.UserId}`, Decrypted)
-
 		user.Send({
 			op: SystemOpCodes.NewGuildAck,
 		});
