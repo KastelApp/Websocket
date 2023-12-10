@@ -57,6 +57,8 @@ export default class GuildJoin extends Events {
                     D: Guild,
                 }),
             );
+			
+			
         }
         
 		user.Send({
