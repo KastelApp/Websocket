@@ -61,7 +61,6 @@ export default class NewMessage extends Events {
 			}
 		},
 	) {
-		console.log(data.ChannelId)
 		this.Websocket.wss.MainSocket?.publish(
 			`Channel:${data.ChannelId}`,
 			JSON.stringify({
