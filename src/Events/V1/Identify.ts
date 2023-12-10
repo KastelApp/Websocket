@@ -208,7 +208,6 @@ export default class Identify extends Events {
 
 		for (const Guild of Payload.Guilds ?? []) {
 			User.WsUser.Channels[Guild.Id] = Guild.Channels.map((channel) => {
-				console.log(channel.Id);
 				User.Ws.subscribe(`Channel:${channel.Id}`);
 
 				return channel.Id;
