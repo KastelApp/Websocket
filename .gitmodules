@@ -1,3 +1,3 @@
-[submodule "src/Utils/Cql"]
-	path = src/Utils/Cql
+[submodule "cql"]
+	path = cql
 	url = https://github.com/KastelApp/CqlTables

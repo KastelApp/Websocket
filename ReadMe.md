@@ -13,13 +13,10 @@
 
 Kastel is an open-sourced chatting application, Its like [Discord](https://discord.com) but open-sourced and free, It is currently in development and is not ready for use yet, If you want to contribute please read the [Contributing](#contributing) section.
 
-# ⚠️⚠️ WebSocket moved into the API
-
-~~The main focus around it is for the some of the community to help develop and improve it, This will allow the community to have a say in how the application is developed and what features are added, This will also allow the community to help improve the application and make it better for everyone.~~
 
 # Contributing
 
-~~If you want to contribute fork the development branch, make your changes, verify it works then create a pull request with the changed things, In the Pull request explain what you changed and why you changed it. If you want to make more then one change please do it in one pull request unless they are big things (Like changing Packages, Completely refactoring code etc etc)~~
+If you want to contribute fork the development branch, make your changes, verify it works then create a pull request with the changed things, In the Pull request explain what you changed and why you changed it. If you want to make more then one change please do it in one pull request unless they are big things (Like changing Packages, Completely refactoring code etc etc)
 
 ## Maintainers
 
