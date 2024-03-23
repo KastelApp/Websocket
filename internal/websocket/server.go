@@ -12,7 +12,8 @@ import (
 
 type Server struct {
 	Subscriptions Subscription
-	Snowflake internal.Snowflake
+	Snowflake     internal.Snowflake
+	Constants     internal.Constants
 }
 
 func (s *Server) Send(conn *websocket.Conn, message string) {
@@ -73,7 +74,6 @@ func (s *Server) Unsubscribe(topic string, clientID string) {
 	delete(s.Subscriptions[topic], clientID)
 }
 
-
 func (s *Server) ProcessMessage(conn *websocket.Conn, clientID string, msg []byte) *Server {
 	m := Message{}
 	if err := json.Unmarshal(msg, &m); err != nil {
@@ -82,5 +82,5 @@ func (s *Server) ProcessMessage(conn *websocket.Conn, clientID string, msg []byt
 
 	fmt.Println(m)
 
-	return s;
+	return s
 }

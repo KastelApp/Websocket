@@ -1,19 +1,24 @@
 package websocket
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
-	"github.com/gorilla/websocket"
 	"kstlws/internal"
+
+	"github.com/gorilla/websocket"
 )
 
 const (
-	maxClientMessageSize = 1024 * 512       // clients
-	maxMessageSize       = 1024 * 1024 * 10 // ours
+	maxMessageSize = 1024 * 1024 * 2 // ours
 )
 
-var server = &Server{Subscriptions: make(Subscription), Snowflake: *internal.NewSnowflake(1, 1)}
+var server = &Server{
+	Subscriptions: make(Subscription),
+	Snowflake:     *internal.NewSnowflake(1, 1),
+	Constants:     internal.ServerConstants,
+}
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
@@ -34,7 +39,15 @@ func HandleWebsocket(w http.ResponseWriter, r *http.Request) {
 
 	clientID := server.Snowflake.Generate()
 
-	server.Send(conn, fmt.Sprintf(`{"op": 0, "data": {"client_id": "%s"}}`, clientID))
+	json, _ := json.Marshal(Message{
+		Op: 0,
+		Data: map[string]interface{}{
+			"sessionId":         clientID,
+			"heartbeatInterval": internal.GetHeartbeatInterval(),
+		},
+	})
+
+	server.Send(conn, string(json))
 
 	done := make(chan struct{})
 
@@ -58,5 +71,4 @@ func readData(conn *websocket.Conn, clientID string, done chan<- struct{}) {
 }
 
 func writeData(conn *websocket.Conn, clientID string, done <-chan struct{}) {
-	
 }
