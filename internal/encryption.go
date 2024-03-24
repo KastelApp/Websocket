@@ -23,10 +23,12 @@ func PKCS5UnPadding(origData []byte) []byte {
 	return origData[:(length - unpadding)]
 }
 
-func (e *Encryption) SetConfig(config map[string]string) {
+func (e *Encryption) SetConfig(config map[string]string) *Encryption {
 	e.config.algorithm = config["algorithm"]
 	e.config.initVector = config["initVector"]
 	e.config.securityKey = config["securityKey"]
+
+	return e
 }
 
 func (e *Encryption) Decrypt(data string) string {

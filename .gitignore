@@ -2,3 +2,7 @@
 kstlws
 placeholder.txt
 constants.go
+
+configs/*
+
+!configs/example.json

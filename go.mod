@@ -10,6 +10,7 @@ require (
 	github.com/scylladb/go-reflectx v1.0.1 // indirect
 	github.com/scylladb/gocqlx/v2 v2.8.0 // indirect
 	github.com/streadway/amqp v1.1.0 // indirect
+	github.com/texttheater/golang-levenshtein/levenshtein v0.0.0-20200805054039-cae8b0eaed6c // indirect
 	golang.org/x/net v0.17.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 )

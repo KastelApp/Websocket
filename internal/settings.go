@@ -211,7 +211,6 @@ type Constants struct {
 	PresenceTypes            PresenceTypes
 	StatusTypes              StatusTypes
 	MessageFlags             MessageFlags
-	// NonDeletableMessageFlags  should be an object of type MessageFlags
 	NonDeletableMessageFlags MessageFlags
 	InviteFlags              InviteFlags
 	PublicFlags              PublicFlags
