@@ -58,18 +58,17 @@ func (f *FlagUtilsBInt) ToJSON() (string, error) {
 	return string(jsonData), nil
 }
 
-
 // FlagFields represents a set of flags.
 type FlagFields struct {
 	PrivateFlags *FlagUtilsBInt
-	PublicFlags *FlagUtilsBInt
+	PublicFlags  *FlagUtilsBInt
 }
 
 // NewFlagFields creates a new FlagFields instance.
 func NewFlagFields(privateFlags, publicFlags *big.Int, privateFlagMap, publicFlagMap map[string]*big.Int) *FlagFields {
 	return &FlagFields{
 		PrivateFlags: NewFlagUtilsBInt(privateFlags, privateFlagMap),
-		PublicFlags: NewFlagUtilsBInt(publicFlags, publicFlagMap),
+		PublicFlags:  NewFlagUtilsBInt(publicFlags, publicFlagMap),
 	}
 }
 

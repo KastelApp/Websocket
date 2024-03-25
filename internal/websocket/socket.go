@@ -3,10 +3,12 @@ package websocket
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 
 	"kstlws/internal"
+	v1 "kstlws/internal/websocket/versions/v1"
 
 	"github.com/gocql/gocql"
 	"github.com/gorilla/websocket"
@@ -24,7 +26,8 @@ var server = &Server{
 	Subscriptions: make(internal.Subscription),
 	Snowflake:     *internal.NewSnowflake(1, 1),
 	Constants:     internal.ServerConstants,
-	Encryption:   internal.Encryption{},
+	Encryption:    internal.Encryption{},
+	Config:        config,
 }
 
 func init() {
@@ -49,7 +52,6 @@ func init() {
 			namewithoutjson := file.Name()[:len(file.Name())-5]
 
 			similarity := levenshtein.DistanceForStrings([]rune(configFile), []rune(namewithoutjson), levenshtein.DefaultOptions)
-
 
 			if similarity <= 2 {
 				possibleConfigsString += fmt.Sprintf(" - %s\n", file.Name())
@@ -97,14 +99,30 @@ func init() {
 	server.Session = session
 }
 
-
-
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
 		return true
 	},
+}
+
+func HandlePostUpgrade(w http.ResponseWriter, r *http.Request, s *websocket.Conn, version string) internal.UserInterface {
+	clientID := server.Snowflake.Generate()
+
+	switch version {
+	case "v1":
+		{
+			return v1.HandleUserCreation(w, r, s, clientID)
+		}
+
+	default:
+		{
+			log.Println("Invalid version, we received:", version)
+			return nil
+		}
+	}
+
 }
 
 func HandleWebsocket(w http.ResponseWriter, r *http.Request) {
@@ -116,45 +134,62 @@ func HandleWebsocket(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	clientID := server.Snowflake.Generate()
-	heartbeatInterval := internal.GetHeartbeatInterval()
+	version := r.URL.Query().Get("version")
+	// encoding := r.URL.Query().Get("encoding") // todo: implement
 
-	json, _ := json.Marshal(internal.Message{
-		Op: int(internal.Hello),
-		Data: map[string]interface{}{
-			"sessionId":         clientID,
-			"heartbeatInterval": heartbeatInterval,
-		},
-	})
+	user := HandlePostUpgrade(w, r, conn, version)
 
-	user := &internal.User{
-		Socket:            conn,
-		SessionId:         clientID,
-		HeartbeatInterval: heartbeatInterval,
+	if user == nil {
+		invalidVersionError := internal.ErrorCodes["invalidVersion"]
+
+		err := conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(invalidVersionError.Code, invalidVersionError.Reason))
+
+		if err != nil {
+			conn.Close()
+
+			log.Fatal(err)
+
+			return
+		}
+
+		conn.Close()
+
+		return
 	}
-
-	server.Send(user, string(json))
 
 	done := make(chan struct{})
 
-	go writeData(user, clientID, done)
-	readData(user, clientID, done)
+	clientID := user.GetBaseUser().SessionId
+
+	go writeData(user, version, clientID, done)
+	readData(user, version, clientID, done)
 }
 
-func readData(user *internal.User, clientID string, done chan<- struct{}) {
-	user.Socket.SetReadLimit(maxMessageSize)
+func readData(user internal.UserInterface, version, clientID string, done chan<- struct{}) {
+	baseUser := user.GetBaseUser()
+
+	baseUser.Socket.SetReadLimit(maxMessageSize)
 
 	for {
-		_, msg, err := user.Socket.ReadMessage()
+		_, msg, err := baseUser.Socket.ReadMessage()
 		if err != nil {
 			server.RemoveClient(clientID)
 			close(done)
 			break
 		}
 
-		server.ProcessMessage(user, clientID, msg)
+		switch version {
+		case "v1":
+			{
+				if user, ok := user.(v1.User); ok {
+					v1.HandleProcessingMessage(server, user, clientID, msg)
+				} else {
+					fmt.Println("Error casting to v1.User")
+				}
+			}
+		}
 	}
 }
 
-func writeData(user *internal.User, clientID string, done <-chan struct{}) {
+func writeData(user internal.UserInterface, version, clientID string, done <-chan struct{}) {
 }

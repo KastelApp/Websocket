@@ -92,29 +92,29 @@ func (e *Encryption) Encrypt(data string) string {
 }
 
 func (e *Encryption) CompleteDecryption(data map[string]interface{}) map[string]interface{} {
-    for key, value := range data {
-        if value != nil {
-            switch v := value.(type) {
-            case string:
-                data[key] = e.Decrypt(v)
-            case map[string]interface{}:
-                data[key] = e.CompleteDecryption(v)
-            case []interface{}:
-                for i, item := range v {
-                    if item != nil {
-                        switch itemValue := item.(type) {
-                        case string:
-                            data[key].([]interface{})[i] = e.Decrypt(itemValue)
-                        case map[string]interface{}:
-                            data[key].([]interface{})[i] = e.CompleteDecryption(itemValue)
-                        }
-                    }
-                }
-            }
-        }
-    }
+	for key, value := range data {
+		if value != nil {
+			switch v := value.(type) {
+			case string:
+				data[key] = e.Decrypt(v)
+			case map[string]interface{}:
+				data[key] = e.CompleteDecryption(v)
+			case []interface{}:
+				for i, item := range v {
+					if item != nil {
+						switch itemValue := item.(type) {
+						case string:
+							data[key].([]interface{})[i] = e.Decrypt(itemValue)
+						case map[string]interface{}:
+							data[key].([]interface{})[i] = e.CompleteDecryption(itemValue)
+						}
+					}
+				}
+			}
+		}
+	}
 
-    return data
+	return data
 }
 
 func (e *Encryption) CompleteEncryption(data map[string]interface{}) map[string]interface{} {

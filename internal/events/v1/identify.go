@@ -1,7 +1,9 @@
-package events
+package v1
 
 import (
+	"fmt"
 	"kstlws/internal"
+	"kstlws/internal/websocket/versions/v1"
 )
 
 type Meta struct {
@@ -16,7 +18,7 @@ type Identify struct {
 	Meta  Meta   `json:"meta"`
 }
 
-func (i *Identify) Run(server internal.ServerInterface, user *internal.User, message Identify, raw *internal.Message) {
+func (i *Identify) Run(server internal.ServerInterface, user *v1.User, message Identify, raw *internal.Message) {
 	user.Metadata.Client = i.Meta.Client
 	user.Metadata.Device = i.Meta.Device
 	user.Metadata.Os = i.Meta.Os
@@ -33,4 +35,14 @@ func (i *Identify) Run(server internal.ServerInterface, user *internal.User, mes
 
 		return
 	}
+
+	if !server.ValidateToken(user.Token) {
+		invalidToken := internal.ErrorCodes["invalidToken"]
+
+		user.Close(invalidToken.Code, invalidToken.Reason)
+
+		return
+	}
+
+	fmt.Print("User identified: ", server.DecodeToken(user.Token))
 }

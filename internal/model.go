@@ -2,7 +2,7 @@ package internal
 
 type Subscription map[string]Client
 
-type Client map[string]*User
+type Client map[string]*BaseUser
 
 type Message struct {
 	Op    int         `json:"op"`

@@ -1,11 +1,15 @@
 package websocket
 
 import (
-	"encoding/json"
-	"fmt"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base64"
 	"kstlws/internal"
-	"kstlws/internal/events"
+	"math/rand"
+	"strconv"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/scylladb/gocqlx/v2"
@@ -17,13 +21,14 @@ type Server struct {
 	Constants     internal.Constants
 	Session       gocqlx.Session
 	Encryption    internal.Encryption
+	Config        internal.Config
 }
 
-func (s *Server) Send(user *internal.User, message string) {
+func (s *Server) Send(user *internal.BaseUser, message string) {
 	user.Socket.WriteMessage(websocket.TextMessage, []byte(message))
 }
 
-func (s *Server) SendWithWait(user *internal.User, message string, wait *sync.WaitGroup) {
+func (s *Server) SendWithWait(user *internal.BaseUser, message string, wait *sync.WaitGroup) {
 	user.Socket.WriteMessage(websocket.TextMessage, []byte(message))
 
 	wait.Done()
@@ -51,7 +56,7 @@ func (s *Server) Publish(topic string, message []byte) {
 	wait.Wait()
 }
 
-func (s *Server) Subscribe(topic string, client *internal.User, clientID string) {
+func (s *Server) Subscribe(topic string, client *internal.BaseUser, clientID string) {
 	if _, exist := s.Subscriptions[topic]; !exist {
 		clients := s.Subscriptions[topic]
 
@@ -77,44 +82,46 @@ func (s *Server) Unsubscribe(topic string, clientID string) {
 	delete(s.Subscriptions[topic], clientID)
 }
 
-func (s *Server) ProcessMessage(user *internal.User, clientID string, msg []byte) *Server {
-	m := internal.Message{}
-	if err := json.Unmarshal(msg, &m); err != nil {
-		s.Send(user, "whar?")
-	}
+// func (s *Server) ProcessMessage(user *internal.BaseUser, clientID string, msg []byte) *Server {
+// 	m := internal.Message{}
+// 	if err := json.Unmarshal(msg, &m); err != nil {
+// 		s.Send(user, "whar?")
+// 	}
 
-	switch m.Op {
-	case int(internal.Identify):
-		{
-			var identify events.Identify
+// 	s.Send(user, s.GenerateToken("39839308932321282"))
 
-			jsonData, err := json.Marshal(m.Data)
-			if err != nil {
-				fmt.Print("Error marshaling map to JSON:", err)
+// 	switch m.Op {
+// 	case int(internal.Identify):
+// 		{
+// 			var identify events.Identify
 
-				break;
-			}
+// 			jsonData, err := json.Marshal(m.Data)
+// 			if err != nil {
+// 				fmt.Print("Error marshaling map to JSON:", err)
 
-			if err := json.Unmarshal(jsonData, &identify); err != nil {
-				s.Send(user, "whar?")
-			}
+// 				break
+// 			}
 
-			identify.Run(s, user, identify, &m)
+// 			if err := json.Unmarshal(jsonData, &identify); err != nil {
+// 				s.Send(user, "whar?")
+// 			}
 
-			break
-		}
+// 			identify.Run(s, user, identify, &m)
 
-	default:
-		{
-			s.Send(user, "whar?")
+// 			break
+// 		}
 
-			// print out all the user data
-			fmt.Println(user)
-		}
-	}
+// 	default:
+// 		{
+// 			s.Send(user, "whar?")
 
-	return s
-}
+// 			// print out all the user data
+// 			fmt.Println(user)
+// 		}
+// 	}
+
+// 	return s
+// }
 
 func (s *Server) GetSubscriptions() internal.Subscription {
 	return s.Subscriptions
@@ -134,4 +141,56 @@ func (s *Server) GetSession() gocqlx.Session {
 
 func (s *Server) GetEncryption() internal.Encryption {
 	return s.Encryption
+}
+
+func (s *Server) GenerateToken(id string) string {
+	snowflake64 := internal.Base64EncodeStripped(id)
+	nonce := strconv.FormatInt(rand.Int63(), 10)
+	stringDated := internal.Base64EncodeStripped(strconv.FormatInt(time.Now().Unix(), 10) + nonce)
+
+	hmac := hmac.New(sha256.New, []byte(s.Config.Encryption.TokenKey))
+	hmac.Write([]byte(snowflake64 + "." + stringDated))
+	hmacSig := base64.URLEncoding.EncodeToString(hmac.Sum(nil))
+
+	return snowflake64 + "." + stringDated + "." + internal.AlreadyBase64EncodedStripped(hmacSig)
+}
+
+func (s *Server) ValidateToken(token string) bool {
+	parts := strings.Split(token, ".")
+
+	for i := 0; i < 2; i++ {
+		decoded, cerr := internal.Base64DecodeStripped(parts[i])
+
+		if cerr != nil {
+			return false
+		}
+
+		parts[i] = string(decoded)
+	}
+
+	for _, part := range parts {
+		if part == "" {
+			return false
+		}
+	}
+
+	hmac := hmac.New(sha256.New, []byte(s.Config.Encryption.TokenKey))
+	hmac.Write([]byte(parts[0] + "." + parts[1]))
+	hmacSig := base64.URLEncoding.EncodeToString(hmac.Sum(nil))
+
+	hmacSig = internal.AlreadyBase64EncodedStripped(hmacSig)
+
+	return hmacSig == parts[2]
+}
+
+func (s *Server) DecodeToken(token string) string {
+	parts := strings.Split(token, ".")
+
+	corrected, cerr := internal.Base64DecodeStripped(parts[0])
+
+	if cerr != nil {
+		return ""
+	}
+
+	return corrected
 }
